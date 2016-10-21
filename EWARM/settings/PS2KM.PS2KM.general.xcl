@@ -1,0 +1,15 @@
+"D:\SDK\IAR Systems\Embedded Workbench\arm\bin\armproc.dll" 
+
+"D:\SDK\IAR Systems\Embedded Workbench\arm\bin\armjlink2.dll" 
+
+"E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Exe\PS2KM.out" 
+
+--plugin "D:\SDK\IAR Systems\Embedded Workbench\arm\bin\armbat.dll" 
+
+--device_macro "D:\SDK\IAR Systems\Embedded Workbench\arm\config\debugger\ST\STM32F0xx.dmac" 
+
+--flash_loader "D:\SDK\IAR Systems\Embedded Workbench\arm\config\flashloader\ST\FlashSTM32F03xx8.board" 
+
+
+
+
