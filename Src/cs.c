@@ -135,7 +135,14 @@ received_data_type atproc_command ( void )
                     pencil_ret = cmd ; 
                 }
                 else {
-                    *(rx_buffer.pool)++ = UPCASE( cc ) ; 
+                    if ( rx_buffer.pool < &(msg_pool[69]) ) {
+                        *rx_buffer.pool++ = UPCASE( cc ) ; 
+                    }
+                    else {  /* pool overflow , abandon all received datas
+                               state machine back to HUNT */
+                        rx_buffer.pool = msg_pool ;
+                        at_state = HUNT ;
+                    }
                 }
                 break ;
             case COK:
