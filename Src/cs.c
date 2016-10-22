@@ -116,7 +116,7 @@ received_data_type atproc_command ( void )
     while (( cc = rx_de_queue() ) != '\0') {
         switch ( at_state ) {
             case HUNT:
-                if ( UPCASE( cc ) == 'A' ) at_state = FOUND_A ;
+                if (( cs_phase > 2 ) &&( UPCASE( cc ) == 'A' )) at_state = FOUND_A ;
                 else if ( UPCASE( cc ) == 'O' ) at_state =  FOUND_O ;
                 break ;
             case FOUND_A:
@@ -163,6 +163,7 @@ received_data_type atproc_command ( void )
                 else at_state = Error ;
                 break ;
             case Error:
+                at_state = HUNT ;
                 ret = garbage ;
             default:
                 break ;
