@@ -912,12 +912,12 @@ HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *pData,
     huart->ErrorCode = HAL_UART_ERROR_NONE;
     huart->RxState = HAL_UART_STATE_BUSY_RX;
 
+#ifndef VANXUM_PS2KM   /* disable any error interrupts */
     /* Enable the UART Parity Error Interrupt */
     __HAL_UART_ENABLE_IT(huart, UART_IT_PE);
-
     /* Enable the UART Error Interrupt: (Frame error, noise error, overrun error) */
     __HAL_UART_ENABLE_IT(huart, UART_IT_ERR);
-
+#endif
     /* Process Unlocked */
     __HAL_UNLOCK(huart);
 
