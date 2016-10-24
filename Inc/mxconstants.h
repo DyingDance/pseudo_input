@@ -92,6 +92,15 @@ typedef enum {
     general ,
 } timmer ;
 
+typedef enum __ps2_status__ {
+     Power_On = 0 ,
+     Reseting ,
+     Config ,
+     stream ,
+     other ,
+     Invild_status = 0xff ,
+ } ps2_status ;
+
 typedef struct __data_package__ {
     /*volatile*/ uint8_t d ;
     /*volatile*/ uint8_t parity ;
@@ -156,6 +165,7 @@ typedef struct __ps2_events__ {
 #define  UPCASE( c ) ( ((c) >= 'a' && (c) <= 'z') ? ((c) - 0x20) : (c) )
 
 extern uint32_t m_ticks , m_step , m_index ;
+extern uint32_t k_ticks , k_step , k_index ;
 
 extern trans_phase m_trans ;
 extern trans_load m_load ;
@@ -164,7 +174,7 @@ extern clk_line_phase m_clk ;
 extern ps2_event m_event ;
 //extern data_line_phase m_data ;      
 
-extern trans_phase KBD_trans ;
-extern trans_load KBD_load ;
+extern trans_phase k_trans ;
+extern trans_load k_load ;
 #endif /* __MXCONSTANT_H */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

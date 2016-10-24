@@ -45,21 +45,11 @@
 #include "stm32f0xx_nucleo.h"
 #include "mxconstants.h" 
 #include "p_mouse.h"
+#include "p_kbd.h"
 #include "cs.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
-/* Definition of TIM instance */
-#define TIMx                              TIM14
-
-/* Definition for TIMx clock resources */
-#define TIMx_CLK_ENABLE()                 __HAL_RCC_TIM14_CLK_ENABLE()
-
-/* Definition for TIMx's NVIC */
-#define TIMx_IRQn                         TIM14_IRQn
-
-/* Definition for TIMx remap */
-#define TIMx_REMAP                        TIM_TIM14_RTC
 
 /* User can use this section to tailor USARTx/UARTx instance used and associated 
    resources */

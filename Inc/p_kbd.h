@@ -1,18 +1,18 @@
 /* vim:set ts=4 sw=4: */
 
-#ifndef __P_MOUSE_H
-#define __P_MOUSE_H
+#ifndef __P_KBD_H
+#define __P_KBD_H
 
 #ifdef __cplusplus
  extern "C" {
 #endif
 
-extern ps2_status m_status ;
+extern ps2_status k_status ;
 
-typedef struct __mouse_attr__ {
+typedef struct __KBD_attr__ {
     uint8_t sample_rate ;
     uint8_t resolution ;
-} mouse_attr ;
+} KBD_attr ;
 
 typedef struct {
     union {
@@ -31,26 +31,26 @@ typedef struct {
     char x;
     char y;
     char w;
-} ps2_package ;
+} kbd_package ;
 
 /**
    Functions
  */
-void clear_mouse_env( void ) ;
-void mouse_ctrl( void ) ;
+void clear_KBD_env( void ) ;
+void KBD_ctrl( void ) ;
 
-GPIO_PinState m_read_clk ( void ) ;
-GPIO_PinState m_read_data ( void ) ;
+GPIO_PinState k_read_clk ( void ) ;
+GPIO_PinState k_read_data ( void ) ;
 
-void m_write_clk( int ) ;
-void m_write_data( int ) ;
+void k_write_clk( int ) ;
+void k_write_data( int ) ;
 
 #if 0
-void m_read_bits(void) ;
+void k_read_bits(void) ;
 #endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __P_MOUSE_H */
+#endif  /* __P_KBD_H */

@@ -35,7 +35,8 @@
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-uint32_t m_ticks = 0 , m_step= 0 , m_index = 0;
+uint32_t m_ticks = 0 , m_step= 0 , m_index = 0 ;
+uint32_t k_ticks = 0 , k_step= 0 , k_index = 0 ;
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -723,7 +724,7 @@ void HAL_SYSTICK_Callback(void)
             break ;
 
     }
-    switch (KBD_trans) {    /* process KBD transfer */
+    switch ( k_trans ) {    /* process KBD transfer */
     }
 }
 /* USER CODE END 4 */
