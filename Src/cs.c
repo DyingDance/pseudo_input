@@ -314,6 +314,10 @@ inline int str2hex (const char *nptr , int *error )
   */
 void PS2KM_UART_IRQHandler(UART_HandleTypeDef *huart)
 {
+
+#ifndef VANXUM_PS2KM    /* do not check error interrupts , given thar all error
+                           interrupts has been disabled */
+
     /* UART parity error interrupt occurred -------------------------------------*/
     if((__HAL_UART_GET_IT(huart, UART_IT_PE) != RESET) && (__HAL_UART_GET_IT_SOURCE(huart, UART_IT_PE) != RESET))
     {
@@ -345,6 +349,7 @@ void PS2KM_UART_IRQHandler(UART_HandleTypeDef *huart)
 
         huart->ErrorCode |= HAL_UART_ERROR_ORE;
     }
+#endif
 
 #if !defined(STM32F030x6) && !defined(STM32F030x8)&& !defined(STM32F070xB)&& !defined(STM32F070x6)&& !defined(STM32F030xC)
     /* UART wakeup from Stop mode interrupt occurred -------------------------------------*/
