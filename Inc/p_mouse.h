@@ -7,14 +7,16 @@
  extern "C" {
 #endif
 
-static  enum __mouse_status__ {
+enum __mouse_status__ {
      Power_On = 0 ,
      Reseting ,
      Config ,
      stream ,
      other ,
      Invild_status = 0xff ,
- } m_status ;
+ } ;
+
+extern enum __mouse_status__ m_status ;
 
 typedef struct __mouse_attr__ {
     uint8_t sample_rate ;

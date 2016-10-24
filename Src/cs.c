@@ -51,20 +51,20 @@ void process_command( void )
     /*as mouse and KBD finished init , report AT
      * to host ,start trans */
     /* TODO: add KBD status here */
-    //if ( m_status != stream ) return ;
+    if ( m_status != stream ) return ;
 
     switch ( cs_phase ) {
         case 0:     /* after ps2 init done , Send a AT for check in */
             if ( GetRemainTime( uart ) == 0 ) {
                 if( HAL_UART_Transmit_IT( &huart1 , "AT\r\n" , ( strlen( "AT\r\n" ))) 
-                                          != HAL_OK ) {
+                            != HAL_OK ) {
                     /*start trans fail , wait 1s then retry*/
                     SetTimeout( wait_1000ms , uart ) ;
                 }
                 /* XXX: start uart receive here ,never stop... 
                  * so , got the full buffer here */
                 else if ( HAL_UART_Receive_IT( &huart1, (uint8_t *)aRxBuffer,
-                                               RXBUFFERSIZE ) != HAL_OK ) {
+                                RXBUFFERSIZE ) != HAL_OK ) {
                     /*start receive fail , wait 1s then retry*/
                     SetTimeout( wait_1000ms , uart ) ;
                     cs_phase++ ;

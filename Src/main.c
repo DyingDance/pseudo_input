@@ -39,21 +39,18 @@ uint32_t m_ticks = 0 , m_step= 0 , m_index = 0;
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
-
-WWDG_HandleTypeDef hwwdg;
-
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-__IO uint8_t BlinkSpeed = 1;
-
+__IO uint8_t BlinkSpeed = 1 ;
+IWDG_HandleTypeDef IwdgHandle ;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
-void Error_Handler(void);
-static void MX_GPIO_Init(void);
-static void MX_USART1_UART_Init(void);
-static void MX_WWDG_Init(void);
+void SystemClock_Config(void) ;
+void Error_Handler(void) ;
+static void MX_GPIO_Init(void) ;
+static void MX_USART1_UART_Init(void) ;
+static void MX_WWDG_Init(void) ;
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -82,7 +79,40 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
-  //MX_WWDG_Init();
+
+    /*##-1- Check if the system has resumed from IWDG reset ####################*/
+  if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET) {
+  }
+  else {
+  }
+
+  /*##-2- Get the LSI frequency: TIM14 is used to measure the LSI frequency ###*/
+  /*  uwLsiFreq = GetLSIFrequency();  */
+
+  /*##-3- Configure the IWDG peripheral ######################################*/
+  /* Set counter reload value to obtain 250ms IWDG TimeOut.
+     IWDG counter clock Frequency = LsiFreq / 32
+     Counter Reload Value = 250ms / IWDG counter clock period
+                          = 0.25s / (32/LsiFreq)
+                          = LsiFreq / (32 * 4)
+                          = LsiFreq / 128 */
+  IwdgHandle.Instance = IWDG;
+
+  IwdgHandle.Init.Prescaler = IWDG_PRESCALER_32;
+  IwdgHandle.Init.Reload    = 43608 / 128;
+  IwdgHandle.Init.Window    = IWDG_WINDOW_DISABLE;
+
+  if (HAL_IWDG_Init(&IwdgHandle) != HAL_OK)
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+
+  /*##-4- Start the IWDG #####################################################*/
+  if (HAL_IWDG_Start(&IwdgHandle) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
   /* USER CODE BEGIN 2 */
   BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
@@ -105,9 +135,13 @@ int main(void)
       /* USER CODE BEGIN 3 */
       mouse_ctrl() ;
       process_command() ;
-  }
-  /* USER CODE END 3 */
 
+      if ( HAL_IWDG_Refresh(&IwdgHandle) != HAL_OK ) {
+          /* Refresh Error */
+          Error_Handler();
+      }
+  }
+      /* USER CODE END 3 */
 }
 
 /** System Clock Configuration
@@ -175,21 +209,6 @@ static void MX_USART1_UART_Init(void)
     Error_Handler();
   }  
   if (HAL_UART_Init(&huart1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-}
-
-/* WWDG init function */
-static void MX_WWDG_Init(void)
-{
-
-  hwwdg.Instance = WWDG;
-  hwwdg.Init.Prescaler = WWDG_PRESCALER_1;
-  hwwdg.Init.Window = 64;
-  hwwdg.Init.Counter = 64;
-  if (HAL_WWDG_Init(&hwwdg) != HAL_OK)
   {
     Error_Handler();
   }

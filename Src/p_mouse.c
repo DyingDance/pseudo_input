@@ -8,6 +8,7 @@
 #include "main.h"
 #include "stm32f0xx_it.h"
 
+enum __mouse_status__ m_status ;
 ps2_event m_event ;
 data_package m_data ;
 ps2_package m_package ;
