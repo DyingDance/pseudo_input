@@ -176,5 +176,8 @@ extern ps2_event m_event ;
 
 extern trans_phase k_trans ;
 extern trans_load k_load ;
+extern data_package k_data ;
+extern clk_line_phase k_clk ;
+extern ps2_event k_event ;
 #endif /* __MXCONSTANT_H */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

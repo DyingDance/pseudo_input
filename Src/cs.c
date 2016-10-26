@@ -51,7 +51,7 @@ void process_command( void )
     /*as mouse and KBD finished init , report AT
      * to host ,start trans */
     /* TODO: add KBD status here */
-    if ( m_status != stream ) return ;
+    if (/* m_status != stream && */ k_status != stream ) return ;
 
     switch ( cs_phase ) {
         case 0:     /* after ps2 init done , Send a AT for check in */
@@ -209,7 +209,7 @@ int post_cmd ( void )
                 break ;
             case 'K':
                 /* TODO: add KBD k_event point here  */
-                /* event_pool = &k_event ; */
+                event_pool = &k_event ;
                 break ;
         }
         return ( purge_pool( pool_scal , event_pool ) );
