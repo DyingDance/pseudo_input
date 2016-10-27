@@ -188,6 +188,7 @@
           <state>USE_HAL_DRIVER</state>
           <state>STM32F030x8</state>
           <state>VANXUM_PS2KM</state>
+          <state>KBD_DEBUG</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -984,6 +985,9 @@
         <name>$PROJ_DIR$\..\Src\main.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\Src\p_kbd.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Src\p_mouse.c</name>
       </file>
       <file>
@@ -1032,6 +1036,9 @@
         <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_i2c_ex.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_iwdg.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_pwr.c</name>
       </file>
       <file>
@@ -1054,9 +1061,6 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_uart_ex.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_wwdg.c</name>
       </file>
     </group>
   </group>

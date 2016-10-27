@@ -1,6 +1,7 @@
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\PS2KM.pbd.linf
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\cs.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\main.pbi
+E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\p_kbd.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\p_mouse.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_cortex.pbi
@@ -10,6 +11,7 @@ E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_flash_ex.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_gpio.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_i2c.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_i2c_ex.pbi
+E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_iwdg.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_msp.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_pwr.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_pwr_ex.pbi
@@ -19,7 +21,6 @@ E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_tim.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_tim_ex.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_uart.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_uart_ex.pbi
-E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_hal_wwdg.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_it.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\stm32f0xx_nucleo.pbi
 E:\sedc\pseudo_input\PS2KM\EWARM\PS2KM\Obj\system_stm32f0xx.pbi

@@ -12,7 +12,7 @@ ByteLimit=50
 CStepIntDis=_ 0
 LeaveTargetRunning=_ 0
 [DebugChecksum]
-Checksum=-1302431291
+Checksum=-1917070547
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -21,7 +21,7 @@ Enabled=_ 0
 [CallStack]
 ShowArgs=0
 [Disassembly]
-MixedMode=0
+MixedMode=1
 [JLinkDriver]
 CStepIntDis=_ 0
 LeaveTargetRunning=_ 0
@@ -134,10 +134,15 @@ TraceBufferSize=0x00000000
 TraceShowTime=0
 TraceShowTimeFreq=1000000
 [struct_types]
-Fmt0=data_package-d	4	0
-Fmt1=event-code	4	0
-Fmt2=event-type	4	0
-Fmt3=event-value	4	0
+Fmt0=USART_TypeDef-BRR	4	0
+Fmt1=USART_TypeDef-CR1	4	0
+Fmt2=USART_TypeDef-CR2	4	0
+Fmt3=USART_TypeDef-CR3	4	0
+Fmt4=USART_TypeDef-ISR	4	0
+Fmt5=data_package-d	4	0
+Fmt6=event-code	4	0
+Fmt7=event-type	4	0
+Fmt8=event-value	4	0
 [array_types]
 Fmt0=uint8_t[9]	4	0
 [watch_formats]
@@ -149,9 +154,6 @@ ShowSource=1
 LoggingEnabled=_ 0
 LogFile=_ ""
 Category=_ 0
-[TermIOLog]
-LoggingEnabled=_ 0
-LogFile=_ ""
 [DriverProfiling]
 Enabled=0
 Mode=1
@@ -159,16 +161,16 @@ Graph=0
 Symbiont=0
 Exclusions=
 [CallStackLog]
-Enabled=0
+Enabled=1
 [CallStackStripe]
 ShowTiming=1
 [Disassemble mode]
 mode=0
 [Breakpoints2]
-Bp0=_ 0 "EMUL_CODE" "0x08000E4C" 0 0 1 "" 0 "" 0
-Bp1=_ 0 "EMUL_CODE" "0x08001C16" 0 0 1 "" 0 "" 0
-Bp2=_ 0 "EMUL_CODE" "{$PROJ_DIR$\..\Src\cs.c}.450.5" 0 0 1 "" 0 "" 0
-Count=3
+Count=0
 [Aliases]
 Count=0
 SuppressDialog=0
+[TermIOLog]
+LoggingEnabled=_ 0
+LogFile=_ ""

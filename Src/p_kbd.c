@@ -7,6 +7,7 @@
   */
 #include "main.h"
 #include "stm32f0xx_it.h"
+#include "code.h"
 
 ps2_status k_status ;
 ps2_event k_event ;
@@ -295,13 +296,28 @@ void get_event( uint8_t point )
     k_load.load_buf[0] = 0x8 ;      /* the first byte ,bit3 always 1 */
     if ( k_event.event_info[point].type == 0x0001 ) {    /* sort the type of event */
         if ( k_event.event_info[point].value ) {
-            k_load.load_buf[0] = k_event.event_info[point].code ;
-            k_load.load_buf[8] = 1 ;
+            if ( k_event.event_info[point].code < 0x60 ) {
+                k_load.load_buf[0] = scan_code[k_event.event_info[point].code][1] ;
+                k_load.load_buf[8] = 1 ;
+            }
+            else {
+                k_load.load_buf[0] = 0xe0 ;
+                k_load.load_buf[1] = scan_code[k_event.event_info[point].code][1] ;
+                k_load.load_buf[8] = 2 ;
+            }
         }
         else {
-            k_load.load_buf[0] = 0xf0 ;
-            k_load.load_buf[1] = k_event.event_info[point].code ;
-            k_load.load_buf[8] = 2 ;
+            if ( k_event.event_info[point].code < 0x60 ) {
+                k_load.load_buf[0] = 0xf0 ;
+                k_load.load_buf[1] = scan_code[k_event.event_info[point].code][1] ;
+                k_load.load_buf[8] = 2 ;
+            }
+            else {
+                k_load.load_buf[0] = 0xe0 ;
+                k_load.load_buf[1] = 0xf0 ;
+                k_load.load_buf[2] = scan_code[k_event.event_info[point].code][1] ;
+                k_load.load_buf[8] = 3 ;
+            }
         }
     }
 }
