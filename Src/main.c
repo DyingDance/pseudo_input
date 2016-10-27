@@ -1078,7 +1078,7 @@ void HAL_SYSTICK_Callback(void)
                         k_clk.level = HIGH ;
                         k_write_data( 1 ) ;    /* Release data line */
                         /* an transfer completed */
-                        k_ticks = 10 ;
+                        k_ticks = 40 ;
                         k_trans = idle;
                         k_load.done = 1 ;
                     }

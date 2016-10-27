@@ -35,7 +35,7 @@ void clear_KBD_env( void )
 void KBD_ctrl (void)
 {
     static uint32_t p_timeout ;
-    static uint8_t k_mission , k_job ;
+    static uint8_t k_mission , k_job , hot ;
     switch ( k_status ) {
         case Power_On:
             switch ( k_load.content ) {
@@ -43,12 +43,14 @@ void KBD_ctrl (void)
                     if ( GetRemainTime( KBD ) == 0 ) {
                         /* wait for 4 second ,without reset command, should
                          * reset actively */
+                        hot = 1 ;
                         k_status = Reseting ;
                     }
                     break ;
                 case command:
                     if (( k_trans == idle ) && k_load.done ) {
-                        if ( k_data.valid && ( k_data.d == 0xff )) {
+                        if ( k_data.valid ) {
+                            k_mission = k_data.d ;
                             k_load.load_buf[0] = 0xfa ;
                             k_load.load_buf[8] = 1 ;
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
@@ -56,17 +58,14 @@ void KBD_ctrl (void)
                             k_load.done = 0 ;
                             HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
                         }
-                        else {
-                            HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
-                            if( k_load.content != command ) k_load.content = standby ;
-                            HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
-                            SetTimeout( wait_1000ms  , KBD ) ;
-                        }
                     }
                     break ;
                 case answer:
                     if ( k_load.done ) {
                         if ( k_load.load_buf[8] == 0 ) {
+                            if ( k_mission == 0xff ) {
+                                hot = 0 ;
+                            }
                             k_status = Reseting ;
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                             if( k_load.done ) k_load.content = standby ;
@@ -98,7 +97,8 @@ void KBD_ctrl (void)
                 case report:
                     if ( k_load.done ) {
                         if ( k_load.load_buf[8] == 0 ) {
-                            k_status = Config ;
+                            if ( hot ) k_status = stream ;
+                            else  k_status = Config ;
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                             if( k_load.done ) k_load.content = standby ;
                             HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
@@ -107,7 +107,8 @@ void KBD_ctrl (void)
                     break ;
                 case command:
                     /* has already received an command , Most likely to be F2 */
-                    k_status = Config ;
+                    if ( hot ) k_status = stream ;
+                    else k_status = Config ;
                 case answer:
                 default:
                     break ;
@@ -158,6 +159,7 @@ void KBD_ctrl (void)
                         }
                         else if ( k_mission == 0xFF ) {
                             SetTimeout( wait_500ms, KBD ) ;
+                            hot = 0 ;
                             k_status = Reseting ;
                         }
                         k_mission = 0 ;
@@ -201,8 +203,16 @@ void KBD_ctrl (void)
                     if (( k_trans == idle ) && k_load.done ) {
                         if ( k_data.valid ) {
                             k_mission = k_data.d ;
-                            k_load.load_buf[0] = 0xfa ;
-                            k_load.load_buf[8] = 1 ;
+                            if ( k_data.d == 0xf2 ) {
+                                k_load.load_buf[0] = 0xfa ;
+                                k_load.load_buf[1] = 0xab ;
+                                k_load.load_buf[2] = 0x83 ;
+                                k_load.load_buf[8] = 3 ;
+                            }
+                            else {
+                                k_load.load_buf[0] = 0xfa ;
+                                k_load.load_buf[8] = 1 ;
+                            }
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                             if( k_load.done ) k_load.content = answer ;
                             k_load.done = 0 ;
@@ -214,8 +224,8 @@ void KBD_ctrl (void)
                     if ( k_load.done ) {
                         if ( k_load.load_buf[8] == 0 ) {
                             if ( k_mission == 0xff ) {
-                                k_status = Reseting ;
                                 SetTimeout( wait_500ms, KBD ) ;
+                                hot = 0 ;
                                 k_status = Reseting ;
                             }
                             else if ( k_mission == 0xf5 ) {
