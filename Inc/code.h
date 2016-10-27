@@ -127,7 +127,7 @@ static const uint8_t scan_code[][2] = {
     { 0x74 , 0x37 },    /* Power */
     { 0x75 , 0x5c },    /* TODO:Unknown */
     { 0x76 , 0x5f },    /* TODO:Unknown */
-    { 0x77 , 0x62 },    /* Pause */
+    { 0x77 , 0x7e },    /* Pause */
     { 0x78 , 0x63 },    /* TODO:Unknown */
     { 0x79 , 0x64 },    /* TODO:Unknown */
     { 0x7a , 0x65 },    /* TODO:Unknown */
