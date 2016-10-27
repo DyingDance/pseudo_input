@@ -1,5 +1,10 @@
 /* vim:set ts=4 sw=4: */
-
+/**
+  *****************************************************************************
+  * File Name       :code.h
+  * Description     :PS2 KeyBoard code set1( event info ) to set2 translate
+  * ***************************************************************************
+  */
 #ifndef __CODE_H__
 #define __CODE_H_
 
