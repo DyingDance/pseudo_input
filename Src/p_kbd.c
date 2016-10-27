@@ -293,17 +293,28 @@ void k_write_data( int level)
 
 void get_event( uint8_t point )
 {
+    static uint8_t ctrl = 0 ;
     k_load.load_buf[0] = 0x8 ;      /* the first byte ,bit3 always 1 */
     if ( k_event.event_info[point].type == 0x0001 ) {    /* sort the type of event */
         if ( k_event.event_info[point].value ) {
             if ( k_event.event_info[point].code < 0x60 ) {
                 k_load.load_buf[0] = scan_code[k_event.event_info[point].code][1] ;
                 k_load.load_buf[8] = 1 ;
+                if ( k_event.event_info[point].code == 0x1d ) ctrl = 1 ;
             }
             else {
-                k_load.load_buf[0] = 0xe0 ;
-                k_load.load_buf[1] = scan_code[k_event.event_info[point].code][1] ;
-                k_load.load_buf[8] = 2 ;
+                if (( k_event.event_info[point].code == 0x77 ) && ( !ctrl )) {   /* Press Ctrl+Break */
+                    k_load.load_buf[0] = 0xe1 ;
+                    k_load.load_buf[1] = 0x14 ;
+                    k_load.load_buf[2] = 0x77 ;
+                    k_load.load_buf[8] = 3 ;
+                }
+                else {
+                    k_load.load_buf[0] = 0xe0 ;
+                    k_load.load_buf[1] = scan_code[k_event.event_info[point].code][1] ;
+                    k_load.load_buf[8] = 2 ;
+                    if ( k_event.event_info[point].code == 0x61 ) ctrl = 1 ;
+                }
             }
         }
         else {
@@ -311,12 +322,24 @@ void get_event( uint8_t point )
                 k_load.load_buf[0] = 0xf0 ;
                 k_load.load_buf[1] = scan_code[k_event.event_info[point].code][1] ;
                 k_load.load_buf[8] = 2 ;
+                if ( k_event.event_info[point].code == 0x1d ) ctrl = 0 ;
             }
             else {
-                k_load.load_buf[0] = 0xe0 ;
-                k_load.load_buf[1] = 0xf0 ;
-                k_load.load_buf[2] = scan_code[k_event.event_info[point].code][1] ;
-                k_load.load_buf[8] = 3 ;
+                if (( k_event.event_info[point].code == 0x77 ) && ( !ctrl )) {
+                    k_load.load_buf[0] = 0xe1 ;
+                    k_load.load_buf[1] = 0xf0 ;
+                    k_load.load_buf[2] = 0x14 ;
+                    k_load.load_buf[3] = 0xf0 ;
+                    k_load.load_buf[4] = 0x77 ;
+                    k_load.load_buf[8] = 5 ;
+                }
+                else {
+                    k_load.load_buf[0] = 0xe0 ;
+                    k_load.load_buf[1] = 0xf0 ;
+                    k_load.load_buf[2] = scan_code[k_event.event_info[point].code][1] ;
+                    k_load.load_buf[8] = 3 ;
+                    if ( k_event.event_info[point].code == 0x61 ) ctrl = 0 ;
+                }
             }
         }
     }
