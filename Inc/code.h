@@ -116,7 +116,7 @@ static const uint8_t scan_code[][2] = {
     { 0x64 , 0x11 },    /* Right Alt */
     { 0x65 , 0x10 },    /* TODO:Unknown */
     { 0x66 , 0x6c },    /* Home */
-    { 0x67 , 0x20 },    /* TODO:Unknown */
+    { 0x67 , 0x20 },    /* Up arrow */
     { 0x68 , 0x7d },    /* PgUp */
     { 0x69 , 0x6b },    /* Left arrow */
     { 0x6a , 0x74 },    /* Right arrow */
