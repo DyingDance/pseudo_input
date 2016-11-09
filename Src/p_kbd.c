@@ -17,6 +17,7 @@ trans_phase k_trans ;
 trans_load k_load ;
 clk_line_phase k_clk ;
 
+uint8_t kbd_led = 0 ;
 
 static void get_event( uint8_t ) ;
 
@@ -124,7 +125,7 @@ void KBD_ctrl (void)
                 case command:
                     if ( k_load.done ) {
                         if ( k_data.valid ) {
-                            if ( k_data.d == 0xed ) k_mission = k_data.d ;
+                            /*if ( k_data.d == 0xed ) */k_mission = k_data.d ;
                             if ( k_data.d == 0xF2 ) {
                                 k_load.load_buf[0] = 0xfa ;
                                 k_load.load_buf[1] = 0xab ;
@@ -162,7 +163,7 @@ void KBD_ctrl (void)
                             hot = 0 ;
                             k_status = Reseting ;
                         }
-                        k_mission = 0 ;
+                        /*k_mission = 0 ;*/
                         HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                         if( k_load.done ) k_load.content = standby ;
                         HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
@@ -202,7 +203,13 @@ void KBD_ctrl (void)
                     /* stat should change only by received reset command */
                     if (( k_trans == idle ) && k_load.done ) {
                         if ( k_data.valid ) {
-                            k_mission = k_data.d ;
+                            /* if has received a led command */
+                            if (( k_mission == 0xed ) && 
+                               (( k_data.d & 0xf0 ) == 0 )) {
+                                  kbd_led = k_data.d | 0x80 ;
+                                  k_mission = 0 ;
+                            }
+                            else k_mission = k_data.d ;
                             if ( k_data.d == 0xf2 ) {
                                 k_load.load_buf[0] = 0xfa ;
                                 k_load.load_buf[1] = 0xab ;
@@ -227,11 +234,12 @@ void KBD_ctrl (void)
                                 SetTimeout( wait_500ms, KBD ) ;
                                 hot = 0 ;
                                 k_status = Reseting ;
+                                k_mission = 0 ;
                             }
                             else if ( k_mission == 0xf5 ) {
                                 k_status = Config ;
+                                k_mission = 0 ;
                             }
-                            k_mission = 0 ;
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                             if( k_load.done ) k_load.content = standby ;
                             HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;

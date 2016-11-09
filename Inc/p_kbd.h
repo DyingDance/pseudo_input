@@ -8,6 +8,7 @@
 #endif
 
 extern ps2_status k_status ;
+extern uint8_t kbd_led ;
 
 typedef struct __KBD_attr__ {
     uint8_t sample_rate ;

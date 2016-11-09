@@ -14,6 +14,15 @@
 
 uint8_t cs_phase = 0 ;
 
+static char* KBD_LED[] = { "AT>K\"0000\"\r\n",
+                           "AT>K\"0001\"\r\n",
+                           "AT>K\"0010\"\r\n",
+                           "AT>K\"0011\"\r\n",
+                           "AT>K\"0100\"\r\n",
+                           "AT>K\"0101\"\r\n",
+                           "AT>K\"0110\"\r\n",
+                           "AT>K\"0111\"\r\n", } ;
+
 UART_HandleTypeDef huart1;
 
 /* Buffer used for transmission */
@@ -54,7 +63,7 @@ void process_command( void )
     if (/* m_status != stream && */ k_status != stream ) return ;
 
     switch ( cs_phase ) {
-        case 0:     /* after ps2 init done , Send a AT for check in */
+        case 0:     /* after ps2 init done , Send an AT for check in */
             if ( GetRemainTime( uart ) == 0 ) {
                 if( HAL_UART_Transmit_IT( &huart1 , "AT\r\n" , ( strlen( "AT\r\n" ))) 
                             != HAL_OK ) {
@@ -79,31 +88,51 @@ void process_command( void )
                                           RXBUFFERSIZE ) != HAL_OK ) {
                     SetTimeout( wait_1000ms , uart ) ;
                 }
-                cs_phase++ ;
+                else cs_phase++ ;
             }
             break ;
         case 2:     /* host should reply a OK */
-            if ( atproc_command() == ack ) cs_phase++ ;
+            if ( atproc_command() == ack ) {
+                if ( kbd_led & 0x80 ) cs_phase = 5 ;
+                else cs_phase++ ;
+            }
             break ;
         case 3:     /* normal program flow  */
             if ( atproc_command() == cmd ) cs_phase++ ;
+            else if ( kbd_led & 0x80 ) cs_phase += 2 ;
             break ;
         case 4:
-            if ( m_event.events == 0 /* &&  k_event.events == 0 */ ) {
+            if ( m_event.events == 0  &&  k_event.events == 0 ) {
                 if ( GetRemainTime( uart ) == 0 ) {
-                    if( HAL_UART_Transmit_IT( &huart1 , "OK\r\n" , ( strlen( "AT\r\n" ))) 
+                    if( HAL_UART_Transmit_IT( &huart1 , "OK\r\n" , ( strlen( "OK\r\n" ))) 
                                               != HAL_OK ) {
                         /*start trans fail , wait 1s then retry*/
                         SetTimeout( wait_1000ms , uart ) ;
                     }
-                    cs_phase--  ; 
+                    else {
+                        if ( kbd_led & 0x80 ) cs_phase++ ;  /* received a kbd led command */
+                        else cs_phase--  ; 
+                    }
+                }
+            }
+            break ;
+        case 5:
+            if ( GetRemainTime( uart ) == 0 ) {
+                if( HAL_UART_Transmit_IT( &huart1 , KBD_LED[kbd_led & 7] , strlen( KBD_LED[0] )) 
+                            != HAL_OK ) {
+                    /*start trans fail , wait 1s then retry*/
+                    SetTimeout( wait_1000ms , uart ) ;
+                }
+                else {
+                    kbd_led = 0x0 ;
+                    cs_phase = 2 ; 
                 }
             }
             break ;
 
         default:
             /* error , restore to zero */
-            if ( cs_phase > 4 ) cs_phase = 0 ;
+            if ( cs_phase > 5 ) cs_phase = 3 ;
             break ;
     }
 }
@@ -205,10 +234,11 @@ int post_cmd ( void )
     if ( *pool_scal++ == '>' ) {
         switch ( *pool_scal++ ) {
             case 'M':
+                if ( m_status != stream ) return -1 ;
                 event_pool = &m_event ;
                 break ;
             case 'K':
-                /* TODO: add KBD k_event point here  */
+                if ( k_status != stream ) return -1 ;
                 event_pool = &k_event ;
                 break ;
         }

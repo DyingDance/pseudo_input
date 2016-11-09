@@ -81,7 +81,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
 
-    /*##-1- Check if the system has resumed from IWDG reset ####################*/
+  /*##-1- Check if the system has resumed from IWDG reset ####################*/
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET) {
   }
   else {
@@ -114,7 +114,7 @@ int main(void)
   {
     Error_Handler();
   }
-
+  
   /* USER CODE BEGIN 2 */
   BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
   
@@ -140,7 +140,6 @@ int main(void)
 #endif
       KBD_ctrl() ;
       process_command() ;
-
       if ( HAL_IWDG_Refresh(&IwdgHandle) != HAL_OK ) {
           /* Refresh Error */
           Error_Handler();
