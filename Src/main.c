@@ -116,6 +116,9 @@ int main(void)
   clear_sio_env () ;
   clear_mouse_env() ;
   clear_KBD_env() ;
+  /* finished reset CP210x */
+  HAL_GPIO_WritePin ( GPIOB , CP210x_RESET , GPIO_PIN_SET ) ;
+
   /* enable clk fall interrupt ,start to receive reset(0xff) command */
   //HAL_NVIC_EnableIRQ(MOUSE_CLK_EXTI_IRQn);
   /* in 30/09/2016, I think this work should be down by clk interrupt */
@@ -227,6 +230,19 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  GPIO_InitStruct.Pin = CP210x_RESET ;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  /* Reset CP210x */
+  HAL_GPIO_WritePin ( GPIOB , CP210x_RESET , GPIO_PIN_RESET ) ;
+  
+  GPIO_InitStruct.Pin = CP210x_SUSPEND_N|CP210x_SUSPEND ;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MOUSE_DATA_W_Pin MOUSE_CLK_W_Pin */
   GPIO_InitStruct.Pin = MOUSE_DATA_W_Pin|MOUSE_CLK_W_Pin;

@@ -21,7 +21,6 @@ uint8_t kbd_led = 0 ;
 
 static void get_event( uint8_t ) ;
 
-
 void clear_KBD_env( void )
 {
     k_status = Power_On ;

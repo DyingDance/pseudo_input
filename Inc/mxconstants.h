@@ -40,6 +40,12 @@
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
+#define CP210x_RESET GPIO_PIN_12
+#define CP210x_RESET_GPIO_Port GPIOB
+#define CP210x_SUSPEND_N GPIO_PIN_13
+#define CP210x_SUSPEND_N_GPIO_Port GPIOB
+#define CP210x_SUSPEND GPIO_PIN_14
+#define CP210x_SUSPEND_GPIO_Port GPIOB
 
 #define KBD_DATA_R_Pin GPIO_PIN_0
 #define KBD_DATA_R_GPIO_Port GPIOA
