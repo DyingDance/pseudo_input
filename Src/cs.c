@@ -32,7 +32,7 @@ uint8_t aTxBuffer[24] ;
  * the size of input_event is 24 byte , buffer can store 3 events*/
 uint8_t aRxBuffer[RXBUFFERSIZE] ;
 
-char msg_pool[72] ;     /* 3 events is 66 bytes */
+uint8_t msg_pool[72] ;     /* 3 events is 66 bytes */
 
 #ifndef VANXUM_PS2KM 
 __IO ITStatus UartReady = RESET ;
@@ -118,7 +118,7 @@ void process_command( void )
             break ;
         case 5:
             if ( GetRemainTime( uart ) == 0 ) {
-                if( HAL_UART_Transmit_IT( &huart1 , KBD_LED[kbd_led & 7] , strlen( KBD_LED[0] )) 
+                if( HAL_UART_Transmit_IT( &huart1 , (uint8_t*)KBD_LED[kbd_led & 7] , strlen( KBD_LED[0] )) 
                             != HAL_OK ) {
                     /*start trans fail , wait 1s then retry*/
                     SetTimeout( wait_1000ms , uart ) ;
@@ -229,7 +229,7 @@ int post_cmd ( void )
 {
     char *pool_scal ;
     ps2_event *event_pool ;
-    pool_scal = msg_pool ;
+    pool_scal = ( char * )msg_pool ;
 
     if ( *pool_scal++ == '>' ) {
         switch ( *pool_scal++ ) {

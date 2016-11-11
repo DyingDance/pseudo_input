@@ -7,6 +7,11 @@
  extern "C" {
 #endif
 
+/* ADC handle declaration */
+extern ADC_HandleTypeDef             AdcHandle;
+/* ADC channel configuration structure declaration */
+extern ADC_ChannelConfTypeDef        sConfig;
+
 extern ps2_status k_status ;
 extern uint8_t kbd_led ;
 

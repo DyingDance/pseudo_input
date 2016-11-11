@@ -25,7 +25,7 @@ static void get_event( uint8_t ) ;
 
 void clear_mouse_env( void )
 {
-    m_status = Power_On ;
+    m_status = Invild_status ;
     m_load.content = standby ;
     m_load.done = 1 ;
     m_load.load_buf[8] = 0 ;    /* clear buffer count */
@@ -35,16 +35,8 @@ void clear_mouse_env( void )
     SetTimeout( wait_4000ms, mouse ) ;
 }
 
-#if 0
-inline void m_read_bits(void)
-{
-    m_data.d |== (((u_int8_t)(m_read_data()) & 1 ) << m_step )
-}
-#endif
-
 void mouse_ctrl (void)
 {
-    static uint32_t p_timeout ;
     static uint8_t m_mission , m_job ,hot ;
     switch ( m_status ) {
         case Power_On:
@@ -253,78 +245,15 @@ void mouse_ctrl (void)
             break ;
 
         case other:
+            break ;
+
         case Invild_status:
+            if ( check_ps2_power( mouse_power ) > 0x2048 ) m_status = Power_On ;
+            break ;
+
         default:
             break ;
     }
-#if 0
-    static uint32_t m_step = 0 ;
-    switch ( m_status )
-    {
-        case Power_On:
-            if ( m_step == 0 ) {
-                if(( m_read_clk() == GPIO_PIN_RESET ) && ( m_read_data() == GPIO_PIN_SET )) {
-                    HAL_Delay( 10 ) ;
-                    if (( m_read_clk() == GPIO_PIN_RESET ) && ( m_read_data() == GPIO_PIN_SET )) {
-                        m_step = 1 ;
-                    }
-                    else {
-                        m_step = 0 ;
-                    }
-                }
-            }
-            else if ( m_step == 1 ) {
-                if((m_read_data() == GPIO_PIN_RESET) && (m_read_clk() == GPIO_PIN_RESET)){
-                    HAL_Delay( 4 ) ;
-                    if((m_read_data() == GPIO_PIN_RESET) && (m_read_clk() == GPIO_PIN_RESET)){
-                        m_step = 2 ;
-                    }
-                    // an unnecessary move
-                    //else m_step = 1 ;
-                }
-                else if (m_read_data() == GPIO_PIN_SET) {
-                    /*in m_step 1 , as clock is low ,data line should be hold low
-                      else , we fall back to m_step 0 */
-                    m_step = 0 ;
-                }
-            }
-            else if ( m_step == 2 ) {
-                /*
-                 * host request of send condition ready, waiting for host release
-                 * clock line and hold data line,next m_step ,device should generate
-                 * clock signal
-                 * */
-                if ((m_read_data() == GPIO_PIN_RESET) && (m_read_clk() == GPIO_PIN_SET)) {
-                    /*
-                     * here begin to receive command , most should be reset(0xff)
-                     * */
-                    
-                }
-                /*
-                 * before device start to generate clock signal, host shouldn't
-                 * release data line 
-                 * */
-                else if (m_read_data() == GPIO_PIN_SET) {
-                    m_step = 0 ;
-                } 
-            }
-           break ;
-        case Reseting:
-            if((m_read_data() == GPIO_PIN_RESET) && (m_read_data() == GPIO_PIN_SET)){
-                
-            }
-            break ;
-        case Config:
-            break ;
-        case stream:
-            break ;
-        case other:
-        case Invild_status:
-            break ;
-        default:
-            break ;
-    }
-#endif
 }
 
 GPIO_PinState m_read_clk ()

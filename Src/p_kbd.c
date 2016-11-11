@@ -24,7 +24,7 @@ static void get_event( uint8_t ) ;
 
 void clear_KBD_env( void )
 {
-    k_status = Power_On ;
+    k_status = Invild_status ;
     k_load.content = standby ;
     k_load.done = 1 ;
     k_load.load_buf[8] = 0 ;    /* clear buffer count */
@@ -35,7 +35,6 @@ void clear_KBD_env( void )
 
 void KBD_ctrl (void)
 {
-    static uint32_t p_timeout ;
     static uint8_t k_mission , k_job , hot ;
     switch ( k_status ) {
         case Power_On:
@@ -261,7 +260,12 @@ void KBD_ctrl (void)
             break ;
 
         case other:
+            break ;
+
         case Invild_status:
+            if ( check_ps2_power( KBD_power ) > 0x2048 ) k_status = Power_On ;
+            break ;
+
         default:
             break ;
     }

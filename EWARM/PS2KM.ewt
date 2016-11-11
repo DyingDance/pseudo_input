@@ -1186,9 +1186,6 @@
       <file>
         <name>$PROJ_DIR$\..\Src\stm32f0xx_it.c</name>
       </file>
-      <file>
-        <name>$PROJ_DIR$\..\Src\stm32f0xx_nucleo.c</name>
-      </file>
     </group>
   </group>
   <group>
@@ -1203,6 +1200,12 @@
       <name>STM32F0xx_HAL_Driver</name>
       <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_adc.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_adc_ex.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F0xx_HAL_Driver\Src\stm32f0xx_hal_cortex.c</name>

@@ -45,10 +45,6 @@ GPIO_PinState m_read_data ( void ) ;
 void m_write_clk( int ) ;
 void m_write_data( int ) ;
 
-#if 0
-void m_read_bits(void) ;
-#endif
-
 #ifdef __cplusplus
 }
 #endif

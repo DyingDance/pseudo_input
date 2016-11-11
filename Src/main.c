@@ -44,14 +44,20 @@ uint32_t k_ticks = 0 , k_step= 0 , k_index = 0 ;
 /* Private variables ---------------------------------------------------------*/
 __IO uint8_t BlinkSpeed = 1 ;
 IWDG_HandleTypeDef IwdgHandle ;
+
+/* ADC handle declaration */
+ADC_HandleTypeDef             AdcHandle;
+/* ADC channel configuration structure declaration */
+ADC_ChannelConfTypeDef        sConfig;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void) ;
 void Error_Handler(void) ;
-static void MX_GPIO_Init(void) ;
-static void MX_USART1_UART_Init(void) ;
-static void MX_WWDG_Init(void) ;
+static void iic_GPIO_Init(void) ;
+static void iic_USART1_UART_Init(void) ;
+static void iic_IWDG_Init(void) ;
+static void iic_ADC_Init(void) ;
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -76,47 +82,13 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
-
+  /* Initialize watchdog */
+  iic_IWDG_Init() ;
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_USART1_UART_Init();
-
-  /*##-1- Check if the system has resumed from IWDG reset ####################*/
-  if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET) {
-  }
-  else {
-  }
-
-  /*##-2- Get the LSI frequency: TIM14 is used to measure the LSI frequency ###*/
-  /*  uwLsiFreq = GetLSIFrequency();  */
-
-  /*##-3- Configure the IWDG peripheral ######################################*/
-  /* Set counter reload value to obtain 250ms IWDG TimeOut.
-     IWDG counter clock Frequency = LsiFreq / 32
-     Counter Reload Value = 250ms / IWDG counter clock period
-                          = 0.25s / (32/LsiFreq)
-                          = LsiFreq / (32 * 4)
-                          = LsiFreq / 128 */
-  IwdgHandle.Instance = IWDG;
-
-  IwdgHandle.Init.Prescaler = IWDG_PRESCALER_32;
-  IwdgHandle.Init.Reload    = 43608 / 128;
-  IwdgHandle.Init.Window    = IWDG_WINDOW_DISABLE;
-
-  if (HAL_IWDG_Init(&IwdgHandle) != HAL_OK)
-  {
-    /* Initialization Error */
-    Error_Handler();
-  }
-
-  /*##-4- Start the IWDG #####################################################*/
-  if (HAL_IWDG_Start(&IwdgHandle) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  
+  iic_GPIO_Init() ;
+  iic_USART1_UART_Init() ;
+  iic_ADC_Init() ;
   /* USER CODE BEGIN 2 */
-  BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
   
   clear_sio_env () ;
   clear_mouse_env() ;
@@ -130,10 +102,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-      /* USER CODE END WHILE */
-      BSP_LED_Toggle( LED2 ) ; 
-      HAL_Delay( 4 ) ;
-
       /* USER CODE BEGIN 3 */
 #ifndef KBD_DEBUG
       mouse_ctrl() ;
@@ -195,7 +163,7 @@ void SystemClock_Config(void)
 }
 
 /* USART1 init function */
-static void MX_USART1_UART_Init(void)
+static void iic_USART1_UART_Init(void)
 {
 
   huart1.Instance = USART1;
@@ -226,7 +194,7 @@ static void MX_USART1_UART_Init(void)
         * EVENT_OUT
         * EXTI
 */
-static void MX_GPIO_Init(void)
+static void iic_GPIO_Init(void)
 {
 
   GPIO_InitTypeDef GPIO_InitStruct;
@@ -302,48 +270,124 @@ static void MX_GPIO_Init(void)
   
 }
 
-/* USER CODE BEGIN 4 */
-/**
-  * @brief  EXTI line detection callback.
-  * @param  GPIO_Pin: Specifies the port pin connected to corresponding EXTI line.
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+static void iic_IWDG_Init(void)
 {
-    switch (GPIO_Pin)
+
+    /*##-1- Check if the system has resumed from IWDG reset ####################*/
+    if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST) != RESET) {
+    }
+    else {
+    }
+
+    /*##-2- Get the LSI frequency: TIM14 is used to measure the LSI frequency ###*/
+    /*  uwLsiFreq = GetLSIFrequency();  */
+
+    /*##-3- Configure the IWDG peripheral ######################################*/
+    /* Set counter reload value to obtain 250ms IWDG TimeOut.
+       IWDG counter clock Frequency = LsiFreq / 32
+       Counter Reload Value = 250ms / IWDG counter clock period
+       = 0.25s / (32/LsiFreq)
+       = LsiFreq / (32 * 4)
+       = LsiFreq / 128 */
+    IwdgHandle.Instance = IWDG;
+
+    IwdgHandle.Init.Prescaler = IWDG_PRESCALER_32;
+    IwdgHandle.Init.Reload    = 43608 / 128;
+    IwdgHandle.Init.Window    = IWDG_WINDOW_DISABLE;
+
+    if (HAL_IWDG_Init(&IwdgHandle) != HAL_OK)
     {
-        case KEY_BUTTON_PIN: 
-            if(BlinkSpeed >= 10)
-            {
-                BlinkSpeed = 1 ;
-            }
-            else
-            {
-                BlinkSpeed ++ ;
-            }
-            break ;
-        case KBD_CLK_R_Pin:
-            break ;
-        case MOUSE_CLK_R_Pin:
-            /* means host may send an command
-             * thus data line shoule be high*/
-            if( m_read_data() == GPIO_PIN_SET ) {
-                if ( m_status == Power_On ) {
-                    m_ticks = 10 ;
-                    m_load.content = command ;
-                    m_load.done = 0x00 ;
-                    m_data = (data_package){ 0 ,0 , 0 ,} ;
-                    m_step = 0 ;
-                    //TODO: clear interrupt flag and disable mouse 
-                    // clock line interrupt
-                    HAL_NVIC_DisableIRQ(MOUSE_CLK_EXTI_IRQn) ;
-                }
-            }
-            break ;
-        default:
-            break ;
+        /* Initialization Error */
+        Error_Handler();
+    }
+
+    /*##-4- Start the IWDG #####################################################*/
+    if (HAL_IWDG_Start(&IwdgHandle) != HAL_OK)
+    {
+        Error_Handler();
     }
 }
+
+
+static void iic_ADC_Init(void)
+{
+    /* ### - 1 - Initialize ADC peripheral #################################### */
+    /*
+     *  Instance                  = ADC1.
+     *  ClockPrescaler            = PCLK divided by 4.
+     *  LowPowerAutoWait          = Disabled
+     *  LowPowerAutoPowerOff      = Disabled
+     *  Resolution                = 12 bit (increased to 16 bit with oversampler)
+     *  ScanConvMode              = ADC_SCAN_ENABLE 
+     *  DataAlign                 = Right
+     *  ContinuousConvMode        = Enabled
+     *  DiscontinuousConvMode     = Enabled
+     *  ExternalTrigConv          = ADC_SOFTWARE_START
+     *  ExternalTrigConvEdge      = None (Software start)
+     *  EOCSelection              = End Of Conversion event
+     *  DMAContinuousRequests     = ENABLE
+     */
+
+    AdcHandle.Instance = ADC1;
+
+    AdcHandle.Init.ClockPrescaler        = ADC_CLOCK_SYNC_PCLK_DIV4;
+    AdcHandle.Init.LowPowerAutoWait      = DISABLE;
+    AdcHandle.Init.LowPowerAutoPowerOff  = DISABLE;
+    AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
+    AdcHandle.Init.ScanConvMode          = ADC_SCAN_ENABLE;
+    AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
+    AdcHandle.Init.ContinuousConvMode    = ENABLE;
+    AdcHandle.Init.DiscontinuousConvMode = DISABLE;
+    AdcHandle.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
+    AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
+    AdcHandle.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;
+    AdcHandle.Init.DMAContinuousRequests = ENABLE;
+    AdcHandle.Init.Overrun               = ADC_OVR_DATA_OVERWRITTEN;
+
+    /* Initialize ADC peripheral according to the passed parameters */
+    if (HAL_ADC_Init(&AdcHandle) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+
+    /* ### - 2 - Start calibration ############################################ */
+    if (HAL_ADCEx_Calibration_Start(&AdcHandle) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
+uint16_t check_ps2_power( uint8_t chanel )
+{
+    /* Converted value declaration */
+    uint32_t                      aResultDMA;
+
+    /* ### - 3 - Channel configuration ######################################## */
+    /* Select Channel 0 to be converted */
+    sConfig.Channel      = chanel ;
+    sConfig.Rank         = ADC_RANK_CHANNEL_NUMBER;
+    sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+    if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    /* ### - 4 - Start conversion in DMA mode ################################# */
+    if (HAL_ADC_Start_DMA(&AdcHandle, &aResultDMA, 1) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    if ( HAL_ADC_Stop_DMA( &AdcHandle ) != HAL_OK )
+    {
+        Error_Handler();
+    }
+
+    return aResultDMA ;
+}
+
+/* USER CODE BEGIN 4 */
 
 void HAL_SYSTICK_Callback(void)
 {

@@ -53,7 +53,8 @@ uint32_t GetRemainTime( uint8_t t )
 /* External variables --------------------------------------------------------*/
 /* UART handler declared in "main.c" */
 extern UART_HandleTypeDef huart1 ;
-
+/* ADC handler declared in "main.c" */
+extern ADC_HandleTypeDef             AdcHandle;
 /******************************************************************************/
 /*            Cortex-M0 Processor Interruption and Exception Handlers         */ 
 /******************************************************************************/
@@ -115,10 +116,12 @@ void EXTI2_3_IRQHandler(void)
   * @param  None
   * @retval None
   */
-void EXTI4_15_IRQHandler(void)
+
+void DMA1_Channel1_IRQHandler(void)
 {
-  HAL_GPIO_EXTI_IRQHandler(USER_BUTTON_PIN);
+  HAL_DMA_IRQHandler(AdcHandle.DMA_Handle);
 }
+
 
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

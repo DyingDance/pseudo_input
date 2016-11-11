@@ -32,7 +32,6 @@ D:\SDK\IAR Systems\Embedded Workbench\arm\CMSIS\Include
 -DUSE_HAL_DRIVER=1
 -DSTM32F030x8=1
 -DVANXUM_PS2KM=1
--DKBD_DEBUG=1
 -D__CHAR_BITS__=8
 -D__CHAR_MAX__=0xff
 -D__CHAR_MIN__=0

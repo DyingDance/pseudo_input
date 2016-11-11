@@ -10,9 +10,11 @@ LimitSize=0
 ByteLimit=50
 [StLinkDriver]
 CStepIntDis=_ 0
-LeaveTargetRunning=_ 0
+LeaveTargetRunning=_ 1
+stlinkserialNo=32110567
+stlinkfoundProbes=
 [DebugChecksum]
-Checksum=-1917070547
+Checksum=1274510004
 [Exceptions]
 StopOnUncaught=_ 0
 StopOnThrow=_ 0
@@ -154,6 +156,9 @@ ShowSource=1
 LoggingEnabled=_ 0
 LogFile=_ ""
 Category=_ 0
+[TermIOLog]
+LoggingEnabled=_ 0
+LogFile=_ ""
 [DriverProfiling]
 Enabled=0
 Mode=1
@@ -161,7 +166,7 @@ Graph=0
 Symbiont=0
 Exclusions=
 [CallStackLog]
-Enabled=1
+Enabled=0
 [CallStackStripe]
 ShowTiming=1
 [Disassemble mode]
@@ -171,6 +176,3 @@ Count=0
 [Aliases]
 Count=0
 SuppressDialog=0
-[TermIOLog]
-LoggingEnabled=_ 0
-LogFile=_ ""

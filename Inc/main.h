@@ -42,7 +42,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx.h"
 #include "stm32f0xx_hal.h"
-#include "stm32f0xx_nucleo.h"
 #include "mxconstants.h" 
 #include "p_mouse.h"
 #include "p_kbd.h"
@@ -53,6 +52,9 @@
 
 /* User can use this section to tailor USARTx/UARTx instance used and associated 
    resources */
+
+#define KBD_power 14
+#define mouse_power 15
 /* Definition for USARTx clock resources */
 #define USARTx                           USART1
 #define USARTx_CLK_ENABLE()              __HAL_RCC_USART1_CLK_ENABLE()
@@ -83,5 +85,6 @@
 #define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
 /* Exported functions ------------------------------------------------------- */
 void Error_Handler(void) ;
+uint16_t check_ps2_power( uint8_t ) ;
 
 #endif /* __MAIN_H */
