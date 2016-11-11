@@ -49,7 +49,7 @@ void clear_sio_env ( void )
     rx_buffer.de_q = 0 ;
     rx_buffer.count_q = 0 ;
     rx_buffer.buf = aRxBuffer ; 
-    rx_buffer.pool = msg_pool ;
+    rx_buffer.pool = (uint8_t*)msg_pool ;
 }
     
 /*
@@ -60,7 +60,7 @@ void process_command( void )
     /*as mouse and KBD finished init , report AT
      * to host ,start trans */
     /* TODO: add KBD status here */
-    if (/* m_status != stream && */ k_status != stream ) return ;
+    if ( m_status != stream && k_status != stream ) return ;
 
     switch ( cs_phase ) {
         case 0:     /* after ps2 init done , Send an AT for check in */
@@ -118,7 +118,7 @@ void process_command( void )
             break ;
         case 5:
             if ( GetRemainTime( uart ) == 0 ) {
-                if( HAL_UART_Transmit_IT( &huart1 , KBD_LED[kbd_led & 7] , strlen( KBD_LED[0] )) 
+                if( HAL_UART_Transmit_IT( &huart1 , (uint8_t*)KBD_LED[kbd_led & 7] , strlen( KBD_LED[0] )) 
                             != HAL_OK ) {
                     /*start trans fail , wait 1s then retry*/
                     SetTimeout( wait_1000ms , uart ) ;
@@ -160,16 +160,16 @@ received_data_type atproc_command ( void )
                 if ( cc == '\r' ) {
                     at_state = TAIL_1 ;
                     *(rx_buffer.pool)++ = '\0' ; 
-                    rx_buffer.pool = msg_pool ;
+                    rx_buffer.pool = (uint8_t*)msg_pool ;
                     pencil_ret = cmd ; 
                 }
                 else {
-                    if ( rx_buffer.pool < &(msg_pool[69]) ) {
+                    if ( rx_buffer.pool < (uint8_t*)&(msg_pool[69]) ) {
                         *rx_buffer.pool++ = UPCASE( cc ) ; 
                     }
                     else {  /* pool overflow , abandon all received datas
                                state machine back to HUNT */
-                        rx_buffer.pool = msg_pool ;
+                        rx_buffer.pool = (uint8_t*)msg_pool ;
                         at_state = HUNT ;
                     }
                 }

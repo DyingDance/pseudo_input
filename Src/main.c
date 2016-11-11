@@ -51,8 +51,6 @@ void SystemClock_Config(void) ;
 void Error_Handler(void) ;
 static void MX_GPIO_Init(void) ;
 static void MX_USART1_UART_Init(void) ;
-static void MX_WWDG_Init(void) ;
-
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -115,9 +113,6 @@ int main(void)
     Error_Handler();
   }
   
-  /* USER CODE BEGIN 2 */
-  BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
-  
   clear_sio_env () ;
   clear_mouse_env() ;
   clear_KBD_env() ;
@@ -131,9 +126,6 @@ int main(void)
   while (1)
   {
       /* USER CODE END WHILE */
-      BSP_LED_Toggle( LED2 ) ; 
-      HAL_Delay( 4 ) ;
-
       /* USER CODE BEGIN 3 */
 #ifndef KBD_DEBUG
       mouse_ctrl() ;
@@ -236,12 +228,6 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : MOUSE_DATA_W_Pin MOUSE_CLK_W_Pin */
   GPIO_InitStruct.Pin = MOUSE_DATA_W_Pin|MOUSE_CLK_W_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -266,11 +252,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : KBD_DATA_W_Pin KBD_CLK_W_Pin LD2_Pin */
-  GPIO_InitStruct.Pin = KBD_DATA_W_Pin|KBD_CLK_W_Pin|LD2_Pin;
+  GPIO_InitStruct.Pin = KBD_DATA_W_Pin|KBD_CLK_W_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  k_write_clk(GPIO_PIN_SET) ;
+  k_write_data(GPIO_PIN_SET) ;
 
   /*Configure GPIO pins : KBD_DATA_R_Pin KBD_CLK_R_Pin */
   GPIO_InitStruct.Pin = KBD_DATA_R_Pin;
@@ -283,6 +271,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+#if 0
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, MOUSE_DATA_W_Pin|MOUSE_CLK_W_Pin, GPIO_PIN_RESET);
 
@@ -295,7 +284,6 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(MOUSE_CLK_EXTI_IRQn, 0x03, 0x00);
   
   /* Enable Interrupt ,wait ...not now */
-#if 0
   HAL_NVIC_EnableIRQ(KBD_CLK_EXTI_IRQn);
   HAL_NVIC_EnableIRQ(MOUSE_CLK_EXTI_IRQn);
 #endif
@@ -303,48 +291,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-/**
-  * @brief  EXTI line detection callback.
-  * @param  GPIO_Pin: Specifies the port pin connected to corresponding EXTI line.
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-    switch (GPIO_Pin)
-    {
-        case KEY_BUTTON_PIN: 
-            if(BlinkSpeed >= 10)
-            {
-                BlinkSpeed = 1 ;
-            }
-            else
-            {
-                BlinkSpeed ++ ;
-            }
-            break ;
-        case KBD_CLK_R_Pin:
-            break ;
-        case MOUSE_CLK_R_Pin:
-            /* means host may send an command
-             * thus data line shoule be high*/
-            if( m_read_data() == GPIO_PIN_SET ) {
-                if ( m_status == Power_On ) {
-                    m_ticks = 10 ;
-                    m_load.content = command ;
-                    m_load.done = 0x00 ;
-                    m_data = (data_package){ 0 ,0 , 0 ,} ;
-                    m_step = 0 ;
-                    //TODO: clear interrupt flag and disable mouse 
-                    // clock line interrupt
-                    HAL_NVIC_DisableIRQ(MOUSE_CLK_EXTI_IRQn) ;
-                }
-            }
-            break ;
-        default:
-            break ;
-    }
-}
-
 void HAL_SYSTICK_Callback(void)
 {
     static uint32_t m_count , k_count ;

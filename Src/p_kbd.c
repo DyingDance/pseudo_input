@@ -35,7 +35,6 @@ void clear_KBD_env( void )
 
 void KBD_ctrl (void)
 {
-    static uint32_t p_timeout ;
     static uint8_t k_mission , k_job , hot ;
     switch ( k_status ) {
         case Power_On:

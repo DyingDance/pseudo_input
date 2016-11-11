@@ -42,7 +42,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx.h"
 #include "stm32f0xx_hal.h"
-#include "stm32f0xx_nucleo.h"
 #include "mxconstants.h" 
 #include "p_mouse.h"
 #include "p_kbd.h"

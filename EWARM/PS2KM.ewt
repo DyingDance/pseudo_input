@@ -1186,9 +1186,6 @@
       <file>
         <name>$PROJ_DIR$\..\Src\stm32f0xx_it.c</name>
       </file>
-      <file>
-        <name>$PROJ_DIR$\..\Src\stm32f0xx_nucleo.c</name>
-      </file>
     </group>
   </group>
   <group>

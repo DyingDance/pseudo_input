@@ -44,7 +44,6 @@ inline void m_read_bits(void)
 
 void mouse_ctrl (void)
 {
-    static uint32_t p_timeout ;
     static uint8_t m_mission , m_job ,hot ;
     switch ( m_status ) {
         case Power_On:

@@ -101,24 +101,5 @@ void USARTx_IRQHandler(void)
 #endif
 }
 
-void EXTI0_1_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(KBD_CLK_R_Pin);
-}
-
-void EXTI2_3_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(MOUSE_CLK_R_Pin);
-}
-/**
-  * @brief  This function handles EXTI4_15_IRQHandler Handler.
-  * @param  None
-  * @retval None
-  */
-void EXTI4_15_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(USER_BUTTON_PIN);
-}
-
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
