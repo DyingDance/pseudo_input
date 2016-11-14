@@ -86,7 +86,9 @@ void process_command( void )
             if ( GetRemainTime( uart ) == 0 ) {
                 if ( HAL_UART_Receive_IT( &huart1, (uint8_t *)aRxBuffer,
                                           RXBUFFERSIZE ) != HAL_OK ) {
-                    SetTimeout( wait_1000ms , uart ) ;
+                    SetTimeout( wait_4000ms , uart ) ;
+                    /* no respond from host , retry here... */
+                    cs_phase-- ;
                 }
                 else cs_phase++ ;
             }
@@ -95,6 +97,10 @@ void process_command( void )
             if ( atproc_command() == ack ) {
                 if ( kbd_led & 0x80 ) cs_phase = 5 ;
                 else cs_phase++ ;
+            }
+            else {  /* respond not correct , wait 4s then retry */
+                SetTimeout( wait_4000ms , uart ) ;
+                cs_phase-- ;
             }
             break ;
         case 3:     /* normal program flow  */

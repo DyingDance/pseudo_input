@@ -93,6 +93,9 @@ int main(void)
   clear_sio_env () ;
   clear_mouse_env() ;
   clear_KBD_env() ;
+  /* finished reset CP210x */
+  HAL_GPIO_WritePin ( GPIOB , CP210x_RESET , GPIO_PIN_SET ) ;
+
   /* enable clk fall interrupt ,start to receive reset(0xff) command */
   //HAL_NVIC_EnableIRQ(MOUSE_CLK_EXTI_IRQn);
   /* in 30/09/2016, I think this work should be down by clk interrupt */
@@ -204,11 +207,18 @@ static void iic_GPIO_Init(void)
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
+  GPIO_InitStruct.Pin = CP210x_RESET ;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  /* Reset CP210x */
+  HAL_GPIO_WritePin ( GPIOB , CP210x_RESET , GPIO_PIN_RESET ) ;
+  
+  GPIO_InitStruct.Pin = CP210x_SUSPEND_N|CP210x_SUSPEND ;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MOUSE_DATA_W_Pin MOUSE_CLK_W_Pin */
   GPIO_InitStruct.Pin = MOUSE_DATA_W_Pin|MOUSE_CLK_W_Pin;
@@ -234,11 +244,13 @@ static void iic_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : KBD_DATA_W_Pin KBD_CLK_W_Pin LD2_Pin */
-  GPIO_InitStruct.Pin = KBD_DATA_W_Pin|KBD_CLK_W_Pin|LD2_Pin;
+  GPIO_InitStruct.Pin = KBD_DATA_W_Pin|KBD_CLK_W_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  k_write_clk(GPIO_PIN_SET) ;
+  k_write_data(GPIO_PIN_SET) ;
 
   /*Configure GPIO pins : KBD_DATA_R_Pin KBD_CLK_R_Pin */
   GPIO_InitStruct.Pin = KBD_DATA_R_Pin;
@@ -251,6 +263,7 @@ static void iic_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+#if 0
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, MOUSE_DATA_W_Pin|MOUSE_CLK_W_Pin, GPIO_PIN_RESET);
 
@@ -263,7 +276,6 @@ static void iic_GPIO_Init(void)
   HAL_NVIC_SetPriority(MOUSE_CLK_EXTI_IRQn, 0x03, 0x00);
   
   /* Enable Interrupt ,wait ...not now */
-#if 0
   HAL_NVIC_EnableIRQ(KBD_CLK_EXTI_IRQn);
   HAL_NVIC_EnableIRQ(MOUSE_CLK_EXTI_IRQn);
 #endif

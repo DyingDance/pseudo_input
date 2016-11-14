@@ -40,37 +40,31 @@
 /* USER CODE END Includes */
 
 /* Private define ------------------------------------------------------------*/
+#define CP210x_RESET GPIO_PIN_12
+#define CP210x_RESET_GPIO_Port GPIOB
+#define CP210x_SUSPEND_N GPIO_PIN_13
+#define CP210x_SUSPEND_N_GPIO_Port GPIOB
+#define CP210x_SUSPEND GPIO_PIN_14
+#define CP210x_SUSPEND_GPIO_Port GPIOB
 
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
-#define KBD_CLK_W_Pin GPIO_PIN_0
-#define KBD_CLK_W_GPIO_Port GPIOA
-#define KBD_CLK_R_Pin GPIO_PIN_1        //because PA3 used same interrupt line
-#define KBD_CLK_R_GPIO_Port GPIOA       //whith PC3, so replaced to use PA1
-#define KBD_DATA_W_Pin GPIO_PIN_2
-#define KBD_DATA_W_GPIO_Port GPIOA
-#define KBD_DATA_R_Pin GPIO_PIN_3
+#define KBD_DATA_R_Pin GPIO_PIN_0
 #define KBD_DATA_R_GPIO_Port GPIOA
-#define MOUSE_CLK_W_Pin GPIO_PIN_1
-#define MOUSE_CLK_W_GPIO_Port GPIOC
-#define MOUSE_CLK_R_Pin GPIO_PIN_0
-#define MOUSE_CLK_R_GPIO_Port GPIOC
-#define MOUSE_DATA_W_Pin GPIO_PIN_3
-#define MOUSE_DATA_W_GPIO_Port GPIOC
-#define MOUSE_DATA_R_Pin GPIO_PIN_2
+#define KBD_DATA_W_Pin GPIO_PIN_1
+#define KBD_DATA_W_GPIO_Port GPIOA
+#define KBD_CLK_R_Pin GPIO_PIN_2
+#define KBD_CLK_R_GPIO_Port GPIOA
+#define KBD_CLK_W_Pin GPIO_PIN_3
+#define KBD_CLK_W_GPIO_Port GPIOA
+#define MOUSE_DATA_R_Pin GPIO_PIN_0
 #define MOUSE_DATA_R_GPIO_Port GPIOC
-#define LD2_Pin GPIO_PIN_5
-#define LD2_GPIO_Port GPIOA
-/* USER CODE BEGIN Private defines */
-#if 0
-#define KBD_DATA        GPIO_PIN_0
-#define KBD_CLK         GPIO_PIN_1
-#define MOUSE_DATA      GPIO_PIN_2
-#define MOUSE_CLK       GPIO_PIN_3  
-#endif
+#define MOUSE_DATA_W_Pin GPIO_PIN_1
+#define MOUSE_DATA_W_GPIO_Port GPIOC
+#define MOUSE_CLK_R_Pin GPIO_PIN_2
+#define MOUSE_CLK_R_GPIO_Port GPIOC
+#define MOUSE_CLK_W_Pin GPIO_PIN_3
+#define MOUSE_CLK_W_GPIO_Port GPIOC
 
-#define KBD_CLK_EXTI_IRQn       EXTI0_1_IRQn
-#define MOUSE_CLK_EXTI_IRQn     EXTI2_3_IRQn
+/* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 #define wait_100ms  10000L
