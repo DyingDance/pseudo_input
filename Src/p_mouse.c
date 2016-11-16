@@ -25,7 +25,7 @@ static void get_event( uint8_t ) ;
 
 void clear_mouse_env( void )
 {
-    m_status = Invild_status ;
+    m_status = Invalid_status ;
     m_load.content = standby ;
     m_load.done = 1 ;
     m_load.load_buf[8] = 0 ;    /* clear buffer count */
@@ -247,7 +247,7 @@ void mouse_ctrl (void)
         case other:
             break ;
 
-        case Invild_status:
+        case Invalid_status:
             if ( check_ps2_power( mouse_power ) > 0x2048 ) m_status = Power_On ;
             break ;
 

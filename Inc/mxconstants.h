@@ -87,7 +87,7 @@ typedef enum {
 } timmer ;
 
 typedef enum __ps2_status__ {
-     Invild_status = 0 ,
+     Invalid_status = 0 ,
      Power_On  ,
      Reseting ,
      Config ,

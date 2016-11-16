@@ -24,7 +24,7 @@ static void get_event( uint8_t ) ;
 
 void clear_KBD_env( void )
 {
-    k_status = Invild_status ;
+    k_status = Invalid_status ;
     k_load.content = standby ;
     k_load.done = 1 ;
     k_load.load_buf[8] = 0 ;    /* clear buffer count */
@@ -262,7 +262,7 @@ void KBD_ctrl (void)
         case other:
             break ;
 
-        case Invild_status:
+        case Invalid_status:
             if ( check_ps2_power( KBD_power ) > 0x2048 ) k_status = Power_On ;
             break ;
 
