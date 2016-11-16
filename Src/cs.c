@@ -248,7 +248,7 @@ unsigned char rx_de_queue ( void )
         
         return ( rx_buffer.buf[rx_buffer.de_q] ) ;
     }
-    else return ( '\0' ) ;      /* this '\0' is not for termate string ,
+    else return ( '\0' ) ;      /* this '\0' is not for terminate string ,
                                    just used to mean buffer empty */
 }
 
