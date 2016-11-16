@@ -12,7 +12,7 @@
 
 //#define  ALGORITHM_1
 
-uint8_t cs_phase = 0 ;
+cs_status cs_phase ;
 
 static char* KBD_LED[] = { "AT>K\"0000\"\r\n",
                            "AT>K\"0001\"\r\n",
@@ -50,6 +50,7 @@ void clear_sio_env ( void )
     rx_buffer.count_q = 0 ;
     rx_buffer.buf = aRxBuffer ; 
     rx_buffer.pool = msg_pool ;
+    cs_phase = prepare;
 }
     
 /*
@@ -59,86 +60,106 @@ void process_command( void )
 {
     /*as mouse and KBD finished init , report AT
      * to host ,start trans */
-    /* TODO: add KBD status here */
-    if (/* m_status != stream && */ k_status != stream ) return ;
+    if ( m_status < other &&  k_status < other ) return ;
 
     switch ( cs_phase ) {
-        case 0:     /* after ps2 init done , Send an AT for check in */
+       /* XXX: start uart receive here ,never stop... 
+        * so , got the full buffer here */
+        case prepare:
             if ( GetRemainTime( uart ) == 0 ) {
-                if( HAL_UART_Transmit_IT( &huart1 , "AT\r\n" , ( strlen( "AT\r\n" ))) 
-                            != HAL_OK ) {
-                    /*start trans fail , wait 1s then retry*/
-                    SetTimeout( wait_1000ms , uart ) ;
-                }
                 /* XXX: start uart receive here ,never stop... 
                  * so , got the full buffer here */
-                else if ( HAL_UART_Receive_IT( &huart1, (uint8_t *)aRxBuffer,
+                if ( HAL_UART_Receive_IT( &huart1, (uint8_t *)aRxBuffer,
                                 RXBUFFERSIZE ) != HAL_OK ) {
                     /*start receive fail , wait 1s then retry*/
                     SetTimeout( wait_1000ms , uart ) ;
-                    cs_phase++ ;
                 }
-                else cs_phase += 2 ;
+                else cs_phase++ ;  /* move to listen */
             }
             break ;
-
-        case 1:    /* receive init fail , should reinit here */ 
-            if ( GetRemainTime( uart ) == 0 ) {
-                if ( HAL_UART_Receive_IT( &huart1, (uint8_t *)aRxBuffer,
-                                          RXBUFFERSIZE ) != HAL_OK ) {
-                    SetTimeout( wait_4000ms , uart ) ;
-                    /* no respond from host , retry here... */
-                    cs_phase-- ;
+        /* normal program flow */
+        case listen:
+            if ( k_status == other ) {      /* mouse initliz finished */
+                if ( GetRemainTime( uart ) == 0 ) {
+                    if( HAL_UART_Transmit_IT( &huart1 , "AT>K\"ready\"\r\n" , 
+                      ( strlen( "AT>K\"ready\"\r\n" ))) != HAL_OK ) {
+                        /*start trans fail , wait 1s then retry*/
+                        SetTimeout( wait_1000ms , uart ) ;
+                    }
+                    else cs_phase = KBD_entry ;
                 }
-                else cs_phase++ ;
+            }
+            else if ( m_status == other ) {
+                if ( GetRemainTime( uart ) == 0 ) {
+                    if( HAL_UART_Transmit_IT( &huart1 , "AT>M\"ready\"\r\n" ,
+                      ( strlen( "AT>M\"ready\"\r\n" ))) != HAL_OK ) {
+                        /*start trans fail , wait 1s then retry*/
+                        SetTimeout( wait_1000ms , uart ) ;
+                    }
+                    /* XXX: start uart receive here ,never stop... 
+                     * so , got the full buffer here */
+                    else cs_phase = mouse_entry ;
+                }
+            }
+            else {
+                if ( atproc_command() == cmd ) cs_phase++ ; /* move to action */
             }
             break ;
-        case 2:     /* host should reply a OK */
-            if ( atproc_command() == ack ) {
-                if ( kbd_led & 0x80 ) cs_phase = 5 ;
-                else cs_phase++ ;
-            }
-            else {  /* respond not correct , wait 4s then retry */
-                SetTimeout( wait_4000ms , uart ) ;
-                cs_phase-- ;
-            }
-            break ;
-        case 3:     /* normal program flow  */
-            if ( atproc_command() == cmd ) cs_phase++ ;
-            else if ( kbd_led & 0x80 ) cs_phase += 2 ;
-            break ;
-        case 4:
+        /* check if KBD & mouse event has been processed completed, return a 
+         * OK to host ,then state machine move to listen for netx events*/
+        case action:
             if ( m_event.events == 0  &&  k_event.events == 0 ) {
                 if ( GetRemainTime( uart ) == 0 ) {
                     if( HAL_UART_Transmit_IT( &huart1 , "OK\r\n" , ( strlen( "OK\r\n" ))) 
-                                              != HAL_OK ) {
+                                != HAL_OK ) {
                         /*start trans fail , wait 1s then retry*/
                         SetTimeout( wait_1000ms , uart ) ;
                     }
                     else {
                         if ( kbd_led & 0x80 ) cs_phase++ ;  /* received a kbd led command */
-                        else cs_phase--  ; 
+                        else cs_phase--  ;  /* move to listen state */
                     }
                 }
             }
             break ;
-        case 5:
+            /* respond a KBD LED command  */
+        case reward:
             if ( GetRemainTime( uart ) == 0 ) {
                 if( HAL_UART_Transmit_IT( &huart1 , (uint8_t*)KBD_LED[kbd_led & 7] , strlen( KBD_LED[0] )) 
                             != HAL_OK ) {
                     /*start trans fail , wait 1s then retry*/
                     SetTimeout( wait_1000ms , uart ) ;
                 }
-                else {
-                    kbd_led = 0x0 ;
-                    cs_phase = 2 ; 
-                }
+                else cs_phase++ ;   /* move to mission state */
             }
             break ;
-
+        /* responsed a LED command ,wait for OK from host */
+        case mission:
+            if ( atproc_command() == ack ){
+                cs_phase = listen ;
+                kbd_led = 0x0 ;
+            }
+            else {  /* respond not correct , wait 1s
+                       and back to reward for retry */
+                SetTimeout( wait_1000ms , uart ) ;
+                cs_phase-- ;
+            }
+            break ;
+        /* PS2 KBD init sucess, respond to host ready for access event*/
+        case KBD_entry:
+            if ( atproc_command() == ack ) k_status = stream ; /* KBD trans state move to stream */
+            else SetTimeout( wait_1000ms , uart ) ;
+            cs_phase = listen ;
+            break ;
+        /* PS2 mouse init sucess, respond to host ready for access event*/
+        case mouse_entry:
+            if ( atproc_command() == ack ) m_status = stream ; /* KBD trans state move to stream */
+            else SetTimeout( wait_1000ms , uart ) ;
+            cs_phase = listen ;
+            break ;
+            /* something error, reset state machine */
         default:
-            /* error , restore to zero */
-            if ( cs_phase > 5 ) cs_phase = 3 ;
+            cs_phase = listen ;
             break ;
     }
 }

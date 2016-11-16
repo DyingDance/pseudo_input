@@ -7,6 +7,17 @@
  extern "C" {
 #endif
 
+typedef enum
+{
+    prepare ,
+    listen ,
+    action ,
+    reward ,
+    mission ,
+    KBD_entry ,
+    mouse_entry ,
+} cs_status ;
+
 typedef enum       
 {                                                                      
     HUNT ,              /*  Initial:  looking for a or A                      */
@@ -26,7 +37,7 @@ typedef enum {
 } received_data_type ;
 
 typedef struct {
-    /*volatile*/ uint8_t count_q ;
+    /*volatible*/ uint8_t count_q ;
     uint8_t de_q ;
     /*volatile*/ uint8_t en_q ;
     uint8_t *buf ;

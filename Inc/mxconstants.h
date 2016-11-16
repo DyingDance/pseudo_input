@@ -87,12 +87,13 @@ typedef enum {
 } timmer ;
 
 typedef enum __ps2_status__ {
-     Power_On = 0 ,
+     Invild_status = 0 ,
+     Power_On  ,
      Reseting ,
      Config ,
-     stream ,
      other ,
-     Invild_status = 0xff ,
+     stream ,
+     error_status ,
  } ps2_status ;
 
 typedef struct __data_package__ {
