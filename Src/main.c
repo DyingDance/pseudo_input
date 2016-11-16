@@ -241,8 +241,8 @@ static void MX_GPIO_Init(void)
   
   GPIO_InitStruct.Pin = CP210x_SUSPEND_N|CP210x_SUSPEND ;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MOUSE_DATA_W_Pin MOUSE_CLK_W_Pin */
   GPIO_InitStruct.Pin = MOUSE_DATA_W_Pin|MOUSE_CLK_W_Pin;
