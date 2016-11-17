@@ -65,32 +65,34 @@ void process_command( void )
     switch ( cs_phase ) {
         case 0:     /* after ps2 init done , Send an AT for check in */
             if ( GetRemainTime( uart ) == 0 ) {
-                if( HAL_UART_Transmit_IT( &huart1 , "AT\r\n" , ( strlen( "AT\r\n" ))) 
-                            != HAL_OK ) {
-                    /*start trans fail , wait 1s then retry*/
-                    SetTimeout( wait_1000ms , uart ) ;
-                }
-                /* XXX: start uart receive here ,never stop... 
-                 * so , got the full buffer here */
-                else if ( HAL_UART_Receive_IT( &huart1, (uint8_t *)aRxBuffer,
+                if ( HAL_UART_Receive_IT( &huart1, (uint8_t *)aRxBuffer,
                                 RXBUFFERSIZE ) != HAL_OK ) {
                     /*start receive fail , wait 1s then retry*/
                     SetTimeout( wait_1000ms , uart ) ;
-                    cs_phase++ ;
                 }
-                else cs_phase += 2 ;
+                else {
+                    if ( HAL_UART_Transmit_IT( &huart1 , "AT\r\n" , 
+                       ( strlen( "AT\r\n" ))) != HAL_OK ) {
+                        /*start trans fail , wait 1s then retry*/
+                        SetTimeout( wait_1000ms , uart ) ;
+                        cs_phase++ ;
+                    }
+                    /* XXX: start uart receive here ,never stop... 
+                     * so , got the full buffer here */
+                    else cs_phase += 2 ;
+                }
             }
             break ;
 
         case 1:    /* receive init fail , should reinit here */ 
             if ( GetRemainTime( uart ) == 0 ) {
-                if ( HAL_UART_Receive_IT( &huart1, (uint8_t *)aRxBuffer,
-                                          RXBUFFERSIZE ) != HAL_OK ) {
-                    SetTimeout( wait_4000ms , uart ) ;
-                    /* no respond from host , retry here... */
-                    cs_phase-- ;
+                if ( HAL_UART_Transmit_IT( &huart1 , "AT\r\n" , 
+                                ( strlen( "AT\r\n" ))) != HAL_OK ) {
+                    /*start trans fail , wait 1s then retry*/
+                    SetTimeout( wait_1000ms , uart ) ;
                 }
-                else cs_phase++ ;
+                SetTimeout( wait_1000ms , uart ) ;
+                cs_phase++ ;
             }
             break ;
         case 2:     /* host should reply a OK */
@@ -98,9 +100,8 @@ void process_command( void )
                 if ( kbd_led & 0x80 ) cs_phase = 5 ;
                 else cs_phase++ ;
             }
-            else {  /* respond not correct , wait 4s then retry */
-                SetTimeout( wait_4000ms , uart ) ;
-                cs_phase-- ;
+            else {  /* respond not correct , wait 1s then retry */
+                if ( GetRemainTime( uart ) == 0 ) cs_phase-- ;
             }
             break ;
         case 3:     /* normal program flow  */

@@ -48,7 +48,7 @@ void KBD_ctrl (void)
                     break ;
                 case command:
                     if (( k_trans == idle ) && k_load.done ) {
-                        if ( k_data.valid ) {
+                        if ( k_data.valid && ( k_data.d != 0xe0 )) {
                             k_mission = k_data.d ;
                             k_load.load_buf[0] = 0xfa ;
                             k_load.load_buf[8] = 1 ;
@@ -56,6 +56,12 @@ void KBD_ctrl (void)
                             if( k_load.done ) k_load.content = answer ;
                             k_load.done = 0 ;
                             HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
+                        }
+                        else {
+                            HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
+                            if( k_load.done ) k_load.content = standby ;
+                            HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
+                            SetTimeout( wait_1000ms  , KBD ) ;
                         }
                     }
                     break ;
