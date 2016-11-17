@@ -308,6 +308,7 @@ static void MX_GPIO_Init(void)
   * @param  GPIO_Pin: Specifies the port pin connected to corresponding EXTI line.
   * @retval None
   */
+#if 0
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     switch (GPIO_Pin)
@@ -344,6 +345,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             break ;
     }
 }
+#endif
 
 void HAL_SYSTICK_Callback(void)
 {

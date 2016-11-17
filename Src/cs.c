@@ -60,7 +60,7 @@ void process_command( void )
     /*as mouse and KBD finished init , report AT
      * to host ,start trans */
     /* TODO: add KBD status here */
-    if (/* m_status != stream && */ k_status != stream ) return ;
+    if ( m_status != stream && k_status != stream ) return ;
 
     switch ( cs_phase ) {
         case 0:     /* after ps2 init done , Send an AT for check in */
