@@ -70,7 +70,7 @@ void mouse_ctrl (void)
                         }
                         else {
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
-                            if( m_load.content != command ) m_load.content = standby ;
+                            if( m_load.done ) m_load.content = standby ;
                             HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
                             SetTimeout( wait_1000ms  , mouse ) ;
                         }
