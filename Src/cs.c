@@ -91,8 +91,10 @@ void process_command( void )
                     /*start trans fail , wait 1s then retry*/
                     SetTimeout( wait_1000ms , uart ) ;
                 }
-                SetTimeout( wait_1000ms , uart ) ;
-                cs_phase++ ;
+                else {
+                    SetTimeout( wait_1000ms , uart ) ;
+                    cs_phase++ ;
+                }
             }
             break ;
         case 2:     /* host should reply a OK */
