@@ -102,8 +102,12 @@ void KBD_ctrl (void)
                 case report:
                     if ( k_load.done ) {
                         if ( k_load.load_buf[8] == 0 ) {
+#if 0   /* I have ran out of ideas ,only can skip Config step  */
                             if ( hot ) k_status = stream ;
                             else  k_status = Config ;
+#else
+                            k_status = stream ;
+#endif
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                             if( k_load.done ) k_load.content = standby ;
                             HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
@@ -112,8 +116,13 @@ void KBD_ctrl (void)
                     break ;
                 case command:
                     /* has already received an command , Most likely to be F2 */
+#if 0   /* I have ran out of ideas ,only can skip Config step  */
                     if ( hot ) k_status = stream ;
                     else k_status = Config ;
+#else
+                    k_status = stream ;
+#endif
+                    break ;
                 case answer:
                 default:
                     break ;
@@ -205,7 +214,7 @@ void KBD_ctrl (void)
                     break ;
                 case command:
                     /* stat should change only by received reset command */
-                    if (( k_trans == idle ) && k_load.done ) {
+                    if (/*( k_trans == idle ) && */k_load.done ) {
                         if ( k_data.valid ) {
                             /* if has received a led command */
                             if (( k_mission == 0xed ) && 
@@ -252,8 +261,8 @@ void KBD_ctrl (void)
                     break ;
                 case report:
                     /* KBD event report routine */
-                    /*if ( k_load.done ) {*/
-                    if (( k_trans == idle ) && k_load.done ) {
+                    if ( k_load.done ) {
+                    /*if (( k_trans == idle ) && k_load.done ) {*/
                         k_job++ ;
                         HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                         if( k_load.done ) k_load.content = standby ;
