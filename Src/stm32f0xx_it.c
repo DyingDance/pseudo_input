@@ -35,6 +35,8 @@
 #include "main.h"
 #include "stm32f0xx_it.h"
 
+extern ADC_HandleTypeDef             AdcHandle;
+
 uint32_t times[4]={0,0,0,0} ;
 /* USER CODE BEGIN 0 */
 void SetTimeout( uint32_t time_out, uint8_t t )
@@ -100,6 +102,11 @@ void USARTx_IRQHandler(void)
 #else
   PS2KM_UART_IRQHandler(&huart1);
 #endif
+}
+
+void DMA1_Channel1_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(AdcHandle.DMA_Handle);
 }
 
 /* USER CODE END 1 */

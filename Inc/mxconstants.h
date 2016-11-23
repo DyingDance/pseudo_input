@@ -159,6 +159,7 @@ typedef struct __ps2_events__ {
 
 #define  UPCASE( c ) ( ((c) >= 'a' && (c) <= 'z') ? ((c) - 0x20) : (c) )
 
+extern uint8_t m_PG , KBD_PG ;
 extern uint32_t m_ticks , m_step , m_index ;
 extern uint32_t k_ticks , k_step , k_index ;
 

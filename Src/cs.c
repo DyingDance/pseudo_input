@@ -79,14 +79,17 @@ void process_command( void )
             break ;
         /* normal program flow */
         case listen:
-            if ( k_status == other ) {      /* mouse initliz finished */
+            if ( k_status == other ) {      /* KBD initliz finished */
                 if ( GetRemainTime( uart ) == 0 ) {
                     if( HAL_UART_Transmit_IT( &huart1 , "AT>K\"ready\"\r\n" , 
                       ( strlen( "AT>K\"ready\"\r\n" ))) != HAL_OK ) {
                         /*start trans fail , wait 1s then retry*/
                         SetTimeout( wait_1000ms , uart ) ;
                     }
-                    else cs_phase = KBD_entry ;
+                    else {
+                        cs_phase = KBD_entry ;
+                        SetTimeout( wait_1000ms , uart ) ;
+                    }
                 }
             }
             else if ( m_status == other ) {
@@ -98,11 +101,15 @@ void process_command( void )
                     }
                     /* XXX: start uart receive here ,never stop... 
                      * so , got the full buffer here */
-                    else cs_phase = mouse_entry ;
+                    else {
+                        cs_phase = mouse_entry ;
+                        SetTimeout( wait_1000ms , uart ) ;
+                    }
                 }
             }
             else {
                 if ( atproc_command() == cmd ) cs_phase++ ; /* move to action */
+                else if( kbd_led & 0x80 ) cs_phase = reward ;
             }
             break ;
         /* check if KBD & mouse event has been processed completed, return a 
@@ -128,9 +135,10 @@ void process_command( void )
                 if( HAL_UART_Transmit_IT( &huart1 , (uint8_t*)KBD_LED[kbd_led & 7] , strlen( KBD_LED[0] )) 
                             != HAL_OK ) {
                     /*start trans fail , wait 1s then retry*/
-                    SetTimeout( wait_1000ms , uart ) ;
                 }
                 else cs_phase++ ;   /* move to mission state */
+
+                SetTimeout( wait_1000ms , uart ) ;
             }
             break ;
         /* responsed a LED command ,wait for OK from host */
@@ -141,21 +149,37 @@ void process_command( void )
             }
             else {  /* respond not correct , wait 1s
                        and back to reward for retry */
-                SetTimeout( wait_1000ms , uart ) ;
-                cs_phase-- ;
+                if ( GetRemainTime( uart ) == 0 ) {
+                    SetTimeout( wait_1000ms , uart ) ;
+                    cs_phase-- ;
+                }
             }
             break ;
         /* PS2 KBD init sucess, respond to host ready for access event*/
         case KBD_entry:
-            if ( atproc_command() == ack ) k_status = stream ; /* KBD trans state move to stream */
-            else SetTimeout( wait_1000ms , uart ) ;
-            cs_phase = listen ;
+            if ( atproc_command() == ack ) {
+                k_status = stream ; /* KBD trans state move to stream */
+                cs_phase = listen ;
+            }
+            else {
+                if ( GetRemainTime( uart ) == 0 ) {
+                    SetTimeout( wait_1000ms , uart ) ;
+                    cs_phase = listen ;
+                }
+            }
             break ;
         /* PS2 mouse init sucess, respond to host ready for access event*/
         case mouse_entry:
-            if ( atproc_command() == ack ) m_status = stream ; /* KBD trans state move to stream */
-            else SetTimeout( wait_1000ms , uart ) ;
-            cs_phase = listen ;
+            if ( atproc_command() == ack ) {
+                m_status = stream ; /* KBD trans state move to stream */
+                cs_phase = listen ;
+            }
+            else {
+                if ( GetRemainTime( uart ) == 0 ) {
+                    SetTimeout( wait_1000ms , uart ) ;
+                    cs_phase = listen ;
+                }
+            }
             break ;
             /* something error, reset state machine */
         default:
@@ -172,7 +196,7 @@ received_data_type atproc_command ( void )
     while (( cc = rx_de_queue() ) != '\0') {
         switch ( at_state ) {
             case HUNT:
-                if (( cs_phase > 2 ) &&( UPCASE( cc ) == 'A' )) at_state = FOUND_A ;
+                if (( cs_phase ) &&( UPCASE( cc ) == 'A' )) at_state = FOUND_A ;
                 else if ( UPCASE( cc ) == 'O' ) at_state =  FOUND_O ;
                 break ;
             case FOUND_A:

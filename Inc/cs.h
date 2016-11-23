@@ -9,7 +9,7 @@
 
 typedef enum
 {
-    prepare ,
+    prepare=0 ,
     listen ,
     action ,
     reward ,

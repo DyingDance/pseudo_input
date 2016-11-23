@@ -53,8 +53,8 @@
 /* User can use this section to tailor USARTx/UARTx instance used and associated 
    resources */
 
-#define KBD_power 14
-#define mouse_power 15
+#define KBD_power ((uint32_t) 0x0000000E)
+#define mouse_power ((uint32_t) 0x0000000F)
 /* Definition for USARTx clock resources */
 #define USARTx                           USART1
 #define USARTx_CLK_ENABLE()              __HAL_RCC_USART1_CLK_ENABLE()

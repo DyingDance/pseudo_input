@@ -62,7 +62,7 @@ void mouse_ctrl (void)
                         }
                         else {
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
-                            if( m_load.content != command ) m_load.content = standby ;
+                            if( m_load.done ) m_load.content = standby ;
                             HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
                             SetTimeout( wait_1000ms  , mouse ) ;
                         }
@@ -161,7 +161,7 @@ void mouse_ctrl (void)
                     if ( m_load.done ) {
                         if ( m_mission == 0xF4 ) {
                             m_job = 0 ;
-                            m_status = stream  ;
+                            m_status = other  /*stream*/  ;
                         }
                         else if ( m_mission == 0xFF ) {
                             hot = 0 ;
@@ -180,6 +180,7 @@ void mouse_ctrl (void)
             }
             break ;
 /* Daily work routine */
+        case other:
         case stream:
             switch ( m_load.content ) {
                 case standby:
@@ -243,12 +244,16 @@ void mouse_ctrl (void)
                     break ;
             }
             break ;
-
+#if 0
         case other:
             break ;
-
+#endif
         case Invalid_status:
-            if ( check_ps2_power( mouse_power ) > 0x2048 ) m_status = Power_On ;
+            if ( check_ps2_power( 1 ) > 2048 ) {
+                SetTimeout( wait_1000ms, mouse ) ;
+                m_status = Power_On ;
+                m_PG = 1 ;
+            }
             break ;
 
         default:

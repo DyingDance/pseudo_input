@@ -130,6 +130,50 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 }
 
 /* USER CODE BEGIN 1 */
+void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc)
+{
+  GPIO_InitTypeDef          GPIO_InitStruct;
+  static DMA_HandleTypeDef         DmaHandle;
+  
+  /*##-1- Enable peripherals and GPIO Clocks #################################*/
+  /* Enable GPIO clock ****************************************/
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  /* ADC1 Periph clock enable */
+  __HAL_RCC_ADC1_CLK_ENABLE();
+  /* Enable DMA1 clock */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  
+  /*##- 2- Configure peripheral GPIO #########################################*/
+  /* ADC1 Channel14,15 GPIO pin configuration */
+  GPIO_InitStruct.Pin = GPIO_PIN_4| GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  
+  /*##- 3- Configure DMA #####################################################*/ 
+
+  /*********************** Configure DMA parameters ***************************/
+  DmaHandle.Instance                 = DMA1_Channel1;
+  DmaHandle.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+  DmaHandle.Init.PeriphInc           = DMA_PINC_DISABLE;
+  DmaHandle.Init.MemInc              = DMA_MINC_ENABLE;
+  DmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  DmaHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
+  DmaHandle.Init.Mode                = DMA_NORMAL /*DMA_CIRCULAR*/ ;
+  DmaHandle.Init.Priority            = DMA_PRIORITY_MEDIUM;
+  
+  /* Deinitialize  & Initialize the DMA for new transfer */
+  HAL_DMA_DeInit(&DmaHandle);  
+  HAL_DMA_Init(&DmaHandle);
+  
+  /* Associate the DMA handle */
+  __HAL_LINKDMA(hadc, DMA_Handle, DmaHandle);
+  
+  /* NVIC configuration for DMA Input data interrupt */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+}
 
 /* USER CODE END 1 */
 

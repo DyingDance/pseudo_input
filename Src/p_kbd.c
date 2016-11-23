@@ -21,7 +21,6 @@ uint8_t kbd_led = 0 ;
 
 static void get_event( uint8_t ) ;
 
-
 void clear_KBD_env( void )
 {
     k_status = Invalid_status ;
@@ -35,7 +34,7 @@ void clear_KBD_env( void )
 
 void KBD_ctrl (void)
 {
-    static uint8_t k_mission , k_job , hot ;
+    static uint8_t k_mission , k_job /*, hot*/ ;
     switch ( k_status ) {
         case Power_On:
             switch ( k_load.content ) {
@@ -43,13 +42,13 @@ void KBD_ctrl (void)
                     if ( GetRemainTime( KBD ) == 0 ) {
                         /* wait for 4 second ,without reset command, should
                          * reset actively */
-                        hot = 1 ;
+                        /*hot = 1 ;*/
                         k_status = Reseting ;
                     }
                     break ;
                 case command:
                     if (( k_trans == idle ) && k_load.done ) {
-                        if ( k_data.valid ) {
+                        if ( k_data.valid && ( k_data.d != 0xe0 )) {
                             k_mission = k_data.d ;
                             k_load.load_buf[0] = 0xfa ;
                             k_load.load_buf[8] = 1 ;
@@ -58,13 +57,19 @@ void KBD_ctrl (void)
                             k_load.done = 0 ;
                             HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
                         }
+                        else {
+                            HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
+                            if( k_load.done ) k_load.content = standby ;
+                            HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
+                            SetTimeout( wait_1000ms  , KBD ) ;
+                        }
                     }
                     break ;
                 case answer:
                     if ( k_load.done ) {
                         if ( k_load.load_buf[8] == 0 ) {
                             if ( k_mission == 0xff ) {
-                                hot = 0 ;
+                               /* hot = 0 ; */
                             }
                             k_status = Reseting ;
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
@@ -97,8 +102,12 @@ void KBD_ctrl (void)
                 case report:
                     if ( k_load.done ) {
                         if ( k_load.load_buf[8] == 0 ) {
-                            if ( hot ) k_status = stream ;
+#if 0   /* I have ran out of ideas ,only can skip Config step  */
+                            if ( hot ) k_status = other  /*stream*/ ;
                             else  k_status = Config ;
+#else
+                            k_status = other ;
+#endif
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                             if( k_load.done ) k_load.content = standby ;
                             HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
@@ -107,8 +116,12 @@ void KBD_ctrl (void)
                     break ;
                 case command:
                     /* has already received an command , Most likely to be F2 */
-                    if ( hot ) k_status = stream ;
+#if 0   /* I have ran out of ideas ,only can skip Config step  */
+                    if ( hot ) k_status = other  /*stream*/ ;
                     else k_status = Config ;
+#else
+                    k_status = other ;
+#endif
                 case answer:
                 default:
                     break ;
@@ -155,11 +168,11 @@ void KBD_ctrl (void)
                     if ( k_load.done ) {
                         if ( k_mission == 0xed ) {
                             k_job = 0 ;
-                            k_status = stream  ;
+                            k_status = other  /*stream*/  ;
                         }
                         else if ( k_mission == 0xFF ) {
                             SetTimeout( wait_500ms, KBD ) ;
-                            hot = 0 ;
+                            /* hot = 0 ; */
                             k_status = Reseting ;
                         }
                         /*k_mission = 0 ;*/
@@ -174,6 +187,7 @@ void KBD_ctrl (void)
             }
             break ;
 /* Daily work routine */
+        case other:
         case stream:
             switch ( k_load.content ) {
                 case standby:
@@ -200,7 +214,7 @@ void KBD_ctrl (void)
                     break ;
                 case command:
                     /* stat should change only by received reset command */
-                    if (( k_trans == idle ) && k_load.done ) {
+                    if (/*( k_trans == idle ) && */k_load.done ) {
                         if ( k_data.valid ) {
                             /* if has received a led command */
                             if (( k_mission == 0xed ) && 
@@ -231,7 +245,7 @@ void KBD_ctrl (void)
                         if ( k_load.load_buf[8] == 0 ) {
                             if ( k_mission == 0xff ) {
                                 SetTimeout( wait_500ms, KBD ) ;
-                                hot = 0 ;
+                                /*hot = 0 ;*/
                                 k_status = Reseting ;
                                 k_mission = 0 ;
                             }
@@ -247,8 +261,8 @@ void KBD_ctrl (void)
                     break ;
                 case report:
                     /* KBD event report routine */
-                    /*if ( k_load.done ) {*/
-                    if (( k_trans == idle ) && k_load.done ) {
+                    if ( k_load.done ) {
+                    /*if (( k_trans == idle ) && k_load.done ) {*/
                         k_job++ ;
                         HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                         if( k_load.done ) k_load.content = standby ;
@@ -258,12 +272,16 @@ void KBD_ctrl (void)
                     break ;
             }
             break ;
-
+#if 0
         case other:
             break ;
-
+#endif
         case Invalid_status:
-            if ( check_ps2_power( KBD_power ) > 0x2048 ) k_status = Power_On ;
+            if ( check_ps2_power( 0 ) > 2048 ) {
+                SetTimeout( wait_1000ms, KBD ) ;
+                k_status = Power_On ;
+                KBD_PG = 1 ;
+            }
             break ;
 
         default:

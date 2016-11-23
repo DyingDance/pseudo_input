@@ -42,15 +42,16 @@ uint32_t k_ticks = 0 , k_step= 0 , k_index = 0 ;
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-__IO uint8_t BlinkSpeed = 1 ;
+uint8_t m_PG = 0 , KBD_PG = 0 ;
 IWDG_HandleTypeDef IwdgHandle ;
 
 /* ADC handle declaration */
 ADC_HandleTypeDef             AdcHandle;
-/* ADC channel configuration structure declaration */
-ADC_ChannelConfTypeDef        sConfig;
 /* USER CODE END PV */
-
+#if 1
+ADC_ChannelConfTypeDef        sConfig;
+uint32_t                      aResultDMA[2];
+#endif
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void) ;
 void Error_Handler(void) ;
@@ -82,19 +83,19 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
-  /* Initialize watchdog */
-  iic_IWDG_Init() ;
   /* Initialize all configured peripherals */
   iic_GPIO_Init() ;
   iic_USART1_UART_Init() ;
   iic_ADC_Init() ;
+  /* Initialize watchdog */
+  iic_IWDG_Init() ;
   /* USER CODE BEGIN 2 */
   
   clear_sio_env () ;
   clear_mouse_env() ;
   clear_KBD_env() ;
   /* finished reset CP210x */
-  HAL_GPIO_WritePin ( GPIOB , CP210x_RESET , GPIO_PIN_SET ) ;
+  //HAL_GPIO_WritePin ( GPIOB , CP210x_RESET , GPIO_PIN_SET ) ;
 
   /* enable clk fall interrupt ,start to receive reset(0xff) command */
   //HAL_NVIC_EnableIRQ(MOUSE_CLK_EXTI_IRQn);
@@ -170,7 +171,7 @@ static void iic_USART1_UART_Init(void)
 {
 
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 38400;
+  huart1.Init.BaudRate = 115200 /*38400*/;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -204,21 +205,20 @@ static void iic_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   GPIO_InitStruct.Pin = CP210x_RESET ;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
   /* Reset CP210x */
-  HAL_GPIO_WritePin ( GPIOB , CP210x_RESET , GPIO_PIN_RESET ) ;
+  //HAL_GPIO_WritePin ( GPIOB , CP210x_RESET , GPIO_PIN_RESET ) ;
   
   GPIO_InitStruct.Pin = CP210x_SUSPEND_N|CP210x_SUSPEND ;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : MOUSE_DATA_W_Pin MOUSE_CLK_W_Pin */
   GPIO_InitStruct.Pin = MOUSE_DATA_W_Pin|MOUSE_CLK_W_Pin;
@@ -348,7 +348,7 @@ static void iic_ADC_Init(void)
     AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
     AdcHandle.Init.ScanConvMode          = ADC_SCAN_ENABLE;
     AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-    AdcHandle.Init.ContinuousConvMode    = ENABLE;
+    AdcHandle.Init.ContinuousConvMode    = DISABLE /*ENABLE*/ ;
     AdcHandle.Init.DiscontinuousConvMode = DISABLE;
     AdcHandle.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
     AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -368,17 +368,20 @@ static void iic_ADC_Init(void)
     {
         Error_Handler();
     }
-}
 
-uint16_t check_ps2_power( uint8_t chanel )
-{
-    /* Converted value declaration */
-    uint32_t                      aResultDMA;
+/* fortesting  */
 
     /* ### - 3 - Channel configuration ######################################## */
     /* Select Channel 0 to be converted */
-    sConfig.Channel      = chanel ;
-    sConfig.Rank         = ADC_RANK_CHANNEL_NUMBER;
+    sConfig.Channel      = ADC_CHANNEL_14 ;
+    sConfig.Rank         = 1 ;
+    sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+    if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+    sConfig.Channel      = ADC_CHANNEL_15 ;
+    sConfig.Rank         = 2 ;
     sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
     if (HAL_ADC_ConfigChannel(&AdcHandle, &sConfig) != HAL_OK)
     {
@@ -386,17 +389,47 @@ uint16_t check_ps2_power( uint8_t chanel )
     }
 
     /* ### - 4 - Start conversion in DMA mode ################################# */
-    if (HAL_ADC_Start_DMA(&AdcHandle, &aResultDMA, 1) != HAL_OK)
+    if (HAL_ADC_Start_DMA(&AdcHandle, aResultDMA, 2) != HAL_OK)
     {
         Error_Handler();
     }
 
+#if 0
     if ( HAL_ADC_Stop_DMA( &AdcHandle ) != HAL_OK )
     {
         Error_Handler();
     }
 
-    return aResultDMA ;
+#endif
+}
+
+uint16_t check_ps2_power( uint8_t chanel )
+{
+#if 0
+    /* ADC channel configuration structure declaration */
+    ADC_ChannelConfTypeDef        sConfig;
+    /* Converted value declaration */
+    uint32_t                      aResultDMA;
+#endif
+#if 0
+
+    if ( HAL_ADC_Stop_DMA( &AdcHandle ) != HAL_OK )
+    {
+        Error_Handler();
+    }
+#endif
+    /* ### - 4 - Start conversion in DMA mode ################################# */
+    if (HAL_ADC_Start_DMA(&AdcHandle, aResultDMA, 2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+#if 0
+    if ( HAL_ADC_Stop_DMA( &AdcHandle ) != HAL_OK )
+    {
+        Error_Handler();
+    }
+#endif
+    return aResultDMA[chanel] ;
 }
 
 /* USER CODE BEGIN 4 */
@@ -404,283 +437,332 @@ uint16_t check_ps2_power( uint8_t chanel )
 void HAL_SYSTICK_Callback(void)
 {
     static uint32_t m_count , k_count ;
-#ifndef KBD_DEBUG
-    switch ( m_trans) {     /* process mouse transfer */
-        case idle:
-            if ( m_read_clk() == GPIO_PIN_SET ) {
-                if ( m_ticks == 0 ) {
-                    switch ( m_load.content ) {
-                        case standby:
-                            /* clear trans environment variables */
-                            m_count = 0 ;
-                            break ;
-                        case answer:
-                        case report:
-                            /* ready for device to host trans */
-                            if ( m_count < m_load.load_buf[8] ) {
-                                m_data.d = m_load.load_buf[m_count] ;
-                                m_data.parity = 0 ;
-                                /*TODO: m_count should increase after an byte has 
-                                 * been sent sucessful */
-                                m_load.done = 0 ;
-                                /* double check clk line is high */
-                                m_write_clk( 1 ) ;
-                                m_clk.level = HIGH ;
-                                m_ticks = 4 ;
-                                m_trans = start_bit ;
+    if ( m_PG) {
+        switch ( m_trans) {     /* process mouse transfer */
+            case idle:
+                if ( m_read_clk() == GPIO_PIN_SET ) {
+                    if ( m_ticks == 0 ) {
+                        switch ( m_load.content ) {
+                            case standby:
+                                /* clear trans environment variables */
+                                m_count = 0 ;
+                                break ;
+                            case answer:
+                            case report:
+                                /* ready for device to host trans */
+                                if ( m_count < m_load.load_buf[8] ) {
+                                    m_data.d = m_load.load_buf[m_count] ;
+                                    m_data.parity = 0 ;
+                                    /*TODO: m_count should increase after an byte has 
+                                     * been sent sucessful */
+                                    m_load.done = 0 ;
+                                    /* double check clk line is high */
+                                    m_write_clk( 1 ) ;
+                                    m_clk.level = HIGH ;
+                                    m_ticks = 4 ;
+                                    m_trans = start_bit ;
+                                }
+                                else {
+                                    m_count = 0 ;
+                                    m_load.done = 1 ;
+                                    m_load.load_buf[8] = 0 ;
+                                    /* need change out of interrupt */
+                                    //m_load.content = standby ;
+                                }
+                                break ;
+                        }
+                    }
+                    else --m_ticks ;
+                }
+                else {
+                    /* host pull down the clk, communication has been inhibited*/
+                    m_write_data( 1 ) ;
+                    m_ticks = 10 ;
+                    m_step = 0 ;
+                    /*m_count = 0 ;*/
+                    m_trans = inhibit ;
+                }
+                break ;
+            case inhibit:
+                switch ( m_step ) {
+                    case 0:
+                        /* m_step 0 whait for clk line keep low for at least 100 us */
+                        if ( --m_ticks > 0 ) {
+                            if ( m_read_clk() == GPIO_PIN_SET ) {
+                                m_trans = idle ;
+                                m_ticks = 0 ;
+                            }
+                            else if ( m_read_data() == GPIO_PIN_RESET ) {
+                                m_ticks = 0 ;
+                                m_step = 2 ;
+                            }
+                        }
+                        else {
+                            /*m_count = 0 ; */ /* anyway , answer & report must terminate*/
+                            /* FIXME: should clean load_buf and let routine knows a 
+                             * transfer fail */
+                            if ( m_read_clk() == GPIO_PIN_RESET ) {
+                                /* check for clk keep a low level at least 100 us */
+                                m_step++ ;
                             }
                             else {
-                                m_count = 0 ;
-                                m_load.done = 1 ;
-                                m_load.load_buf[8] = 0 ;
-                                /* need change out of interrupt */
-                                //m_load.content = standby ;
+                                m_trans = idle ;
+                                m_ticks = 0 ;
                             }
-                            break ;
-                    }
-                }
-                else --m_ticks ;
-            }
-            else {
-                /* host pull down the clk, communication has been inhibited*/
-                m_write_data( 1 ) ;
-                m_ticks = 10 ;
-                m_step = 0 ;
-                /*m_count = 0 ;*/
-                m_trans = inhibit ;
-            }
-            break ;
-        case inhibit:
-            switch ( m_step ) {
-                case 0:
-                    /* m_step 0 whait for clk line keep low for at least 100 us */
-                    if ( --m_ticks > 0 ) {
+                        }
+                        break ;
+                    case 1:
+                        /*
+                         * m_step 1 wait for data line fall to low ,and clk must keep low
+                         * */
                         if ( m_read_clk() == GPIO_PIN_SET ) {
                             m_trans = idle ;
                             m_ticks = 0 ;
+                            /*m_step = 0 ;*/
                         }
                         else if ( m_read_data() == GPIO_PIN_RESET ) {
-                            m_ticks = 0 ;
-                            m_step = 2 ;
+                            /* got a host command start condition */
+                            m_step++ ;  /* next step ,wait for clk rise to high */
                         }
-                    }
-                    else {
-                        /*m_count = 0 ; */ /* anyway , answer & report must terminate*/
-                        /* FIXME: should clean load_buf and let routine knows a 
-                         * transfer fail */
-                        if ( m_read_clk() == GPIO_PIN_RESET ) {
-                            /* check for clk keep a low level at least 100 us */
-                            m_step++ ;
+                        break ; 
+                    case 2:
+                        /*
+                         * m_step 2 wait for clk rise to high , thus the start
+                         * condition is meet
+                         * */
+                        m_count = 0 ;  /* anyway , answer & report must terminate*/
+                        if (( m_read_clk() == GPIO_PIN_SET ) && 
+                                    ( m_read_data() == GPIO_PIN_RESET )) {
+                            m_load.content = command ;
+                            m_load.done = 0 ;
+                            m_data = (data_package){ 0 ,0 , 0 ,} ;
+                            m_trans = start_bit ;
+                            m_ticks = 4 ;
+                            m_step = 0 ;
+                            m_clk.level = HIGH ;
                         }
-                        else {
-                            m_trans = idle ;
-                            m_ticks = 0 ;
-                        }
-                    }
-                    break ;
-                case 1:
-                    /*
-                     * m_step 1 wait for data line fall to low ,and clk must keep low
-                     * */
-                    if ( m_read_clk() == GPIO_PIN_SET ) {
-                        m_trans = idle ;
-                        m_ticks = 0 ;
-                        /*m_step = 0 ;*/
-                    }
-                    else if ( m_read_data() == GPIO_PIN_RESET ) {
-                        /* got a host command start condition */
-                        m_step++ ;  /* next step ,wait for clk rise to high */
-                    }
-                    break ; 
-                case 2:
-                    /*
-                     * m_step 2 wait for clk rise to high , thus the start
-                     * condition is meet
-                     * */
-                    m_count = 0 ;  /* anyway , answer & report must terminate*/
-                    if (( m_read_clk() == GPIO_PIN_SET ) && 
-                        ( m_read_data() == GPIO_PIN_RESET )) {
-                        m_load.content = command ;
-                        m_load.done = 0 ;
-                        m_data = (data_package){ 0 ,0 , 0 ,} ;
-                        m_trans = start_bit ;
-                        m_ticks = 4 ;
-                        m_step = 0 ;
-                        m_clk.level = HIGH ;
-                    }
-                    break ;
-                default:
-                    break ;
-            }
-            break ;
+                        break ;
+                    default:
+                        break ;
+                }
+                break ;
 
-        case start_bit:
-            switch ( m_load.content ) {
-                case command:
-                    /*
-                     * receiving an command
-                     * */
-                    if ( --m_ticks == 0 ) {
-                        m_write_clk( 0 ) ;
-                        m_clk.level = LOW ;
-                        m_ticks = 4 ;
-                        m_step = 0 ;
-                        m_trans = significant_bit ;
-                    }
-                    break ;
-
-                case answer:
-                case report:
-                    if( m_clk.level == HIGH ) { /* set start bit */
-                        --m_ticks ;
-                        if ( m_ticks == 1 ) m_write_data( 0 ) ; 
-                        else if ( m_ticks == 0 ) {
+            case start_bit:
+                switch ( m_load.content ) {
+                    case command:
+                        /*
+                         * receiving an command
+                         * */
+                        if ( --m_ticks == 0 ) {
                             m_write_clk( 0 ) ;
                             m_clk.level = LOW ;
-                            m_ticks = 4 ;
-                        }
-                    }
-                    else {  /* data line is high means start bit fault */
-                        if ( --m_ticks == 0 ) {
-                            m_write_clk ( 1 ) ;
-                            m_clk.level = HIGH ;
                             m_ticks = 4 ;
                             m_step = 0 ;
                             m_trans = significant_bit ;
                         }
-                    }
-                    break ;
-                default:
-                    //error condition
-                    break ;
-            }
-            break ;
+                        break ;
 
-        case significant_bit:
-            switch ( m_load.content ) {
-                case command:
-                    if ( --m_ticks == 0 ) {
-                        if ( m_clk.level == LOW ) {
-                            m_write_clk(1) ;
-                            m_clk.level = HIGH ;
-                            m_ticks = 4 ;
-                            m_data.d |= (((m_read_data()) & 1 ) << m_step ) ;
+                    case answer:
+                    case report:
+                        if( m_clk.level == HIGH ) { /* set start bit */
+                            --m_ticks ;
+                            if ( m_ticks == 1 ) m_write_data( 0 ) ; 
+                            else if ( m_ticks == 0 ) {
+                                m_write_clk( 0 ) ;
+                                m_clk.level = LOW ;
+                                m_ticks = 4 ;
+                            }
+                        }
+                        else {  /* data line is high means start bit fault */
+                            if ( --m_ticks == 0 ) {
+                                m_write_clk ( 1 ) ;
+                                m_clk.level = HIGH ;
+                                m_ticks = 4 ;
+                                m_step = 0 ;
+                                m_trans = significant_bit ;
+                            }
+                        }
+                        break ;
+                    default:
+                        //error condition
+                        break ;
+                }
+                break ;
+
+            case significant_bit:
+                switch ( m_load.content ) {
+                    case command:
+                        if ( --m_ticks == 0 ) {
+                            if ( m_clk.level == LOW ) {
+                                m_write_clk(1) ;
+                                m_clk.level = HIGH ;
+                                m_ticks = 4 ;
+                                m_data.d |= (((m_read_data()) & 1 ) << m_step ) ;
+                            }
+                            else {
+                                m_write_clk( 0 ) ;
+                                m_clk.level = LOW ;
+                                m_ticks = 4 ;
+                                if ( ++m_step >= 8 ) {
+                                    m_trans = parity_bit ;
+                                    m_step = 0 ;
+                                }
+                            }
+                        }
+                        break ;
+                    case answer:
+                    case report:
+                        if( m_clk.level == HIGH ) { /* set start bit */
+                            --m_ticks ;
+                            if ( m_ticks == 1 ) {
+                                m_write_data ( m_data.d & 1 ) ;
+                                m_data.parity += m_data.d & 1 ;
+                                m_data.d >>= 1 ;
+                            }
+                            else if ( m_ticks == 0 ) {
+                                m_write_clk( 0 ) ;
+                                m_clk.level = LOW ;
+                                m_ticks = 4 ;
+                            }
+                        }
+                        else {  /* data line is high means start bit fault */
+                            if ( --m_ticks == 0 ) {
+                                m_write_clk ( 1 ) ;
+                                m_clk.level = HIGH ;
+                                m_ticks = 4 ;
+                                if ( ++m_step >= 8 ) {
+                                    m_trans = parity_bit ;
+                                    m_step = 0 ;
+                                }
+                            }
+                        }
+                        break ;
+                    default:
+                        break ;
+                        //error condition
+                }
+                break ;
+
+            case parity_bit:
+                switch ( m_load.content ) {
+                    case command:
+                        if ( --m_ticks == 0 ) {
+                            if ( m_clk.level == LOW ) {
+                                m_write_clk(1) ;
+                                m_clk.level = HIGH ;
+                                m_ticks = 4 ;
+                                m_data.parity = m_data.d ;
+                                m_data.valid = 0 ;
+                                while ( m_data.parity ) {
+                                    m_data.parity &= ( m_data.parity-1 ) ;
+                                    m_data.valid++ ;
+                                }
+                                if ((m_data.valid & 1 ) != ((m_read_data()) & 1 )) {
+                                    m_data.valid = 1 ;
+                                }
+                                else m_data.valid = 0 ;
+                            }
+                            else {
+                                m_write_clk( 0 ) ;
+                                m_clk.level = LOW ;
+                                m_ticks = 4 ;
+                                m_trans = stop_bit ;
+                            }
+                        }
+                        break ; 
+
+                    case answer:
+                    case report:
+                        if( m_clk.level == HIGH ) { /* set start bit */
+                            --m_ticks ;
+                            if ( m_ticks == 1 ) {
+                                m_write_data (( m_data.parity & 1 ) ? 0 : 1 ) ;
+                            }
+                            else if ( m_ticks == 0 ) {
+                                m_write_clk( 0 ) ;
+                                m_clk.level = LOW ;
+                                m_ticks = 4 ;
+                            }
                         }
                         else {
-                            m_write_clk( 0 ) ;
-                            m_clk.level = LOW ;
-                            m_ticks = 4 ;
-                            if ( ++m_step >= 8 ) {
-                                m_trans = parity_bit ;
-                                m_step = 0 ;
+                            if ( --m_ticks == 0 ) {
+                                m_write_clk ( 1 ) ;
+                                m_clk.level = HIGH ;
+                                m_ticks = 4 ;
+                                m_trans = stop_bit ;
                             }
                         }
-                    }
-                    break ;
-                case answer:
-                case report:
-                    if( m_clk.level == HIGH ) { /* set start bit */
-                        --m_ticks ;
-                        if ( m_ticks == 1 ) {
-                            m_write_data ( m_data.d & 1 ) ;
-                            m_data.parity += m_data.d & 1 ;
-                            m_data.d >>= 1 ;
-                        }
-                        else if ( m_ticks == 0 ) {
-                            m_write_clk( 0 ) ;
-                            m_clk.level = LOW ;
-                            m_ticks = 4 ;
-                        }
-                    }
-                    else {  /* data line is high means start bit fault */
-                        if ( --m_ticks == 0 ) {
-                            m_write_clk ( 1 ) ;
-                            m_clk.level = HIGH ;
-                            m_ticks = 4 ;
-                            if ( ++m_step >= 8 ) {
-                                m_trans = parity_bit ;
-                                m_step = 0 ;
-                            }
-                        }
-                    }
-                    break ;
-                default:
-                    break ;
-                    //error condition
-            }
-            break ;
+                        break ;
 
-        case parity_bit:
-            switch ( m_load.content ) {
-                case command:
-                    if ( --m_ticks == 0 ) {
-                        if ( m_clk.level == LOW ) {
-                            m_write_clk(1) ;
-                            m_clk.level = HIGH ;
-                            m_ticks = 4 ;
-                            m_data.parity = m_data.d ;
-                            m_data.valid = 0 ;
-                            while ( m_data.parity ) {
-                                m_data.parity &= ( m_data.parity-1 ) ;
-                                m_data.valid++ ;
+                    default:
+                        //error condition
+                        break ;
+                }
+                break ;
+
+            case stop_bit :
+                switch ( m_load.content ) {
+                    case command:
+                        if ( m_clk.level == HIGH ) {
+                            --m_ticks ;
+                            if ( m_ticks == 1 ) m_write_data( 0 ) ; 
+                            else if ( m_ticks == 0 ) {
+                                m_write_clk( 0 ) ;
+                                m_clk.level = LOW ;
+                                m_ticks = 4 ;
+                                m_trans = ack_bit ;
                             }
-                            if ((m_data.valid & 1 ) != ((m_read_data()) & 1 )) {
-                                m_data.valid = 1 ;
-                            }
-                            else m_data.valid = 0 ;
+                            /*TODO: Read stop bit here ,but I don`t think it was necessary
+                             *      just generate clock */
                         }
                         else {
-                            m_write_clk( 0 ) ;
-                            m_clk.level = LOW ;
-                            m_ticks = 4 ;
-                            m_trans = stop_bit ;
+                            if ( --m_ticks == 0 ) {
+                                m_write_clk( 1 ) ;
+                                m_clk.level = HIGH ;
+                                m_ticks = 4 ;
+                            }
                         }
-                    }
-                    break ; 
+                        break ;
 
-                case answer:
-                case report:
-                    if( m_clk.level == HIGH ) { /* set start bit */
-                        --m_ticks ;
-                        if ( m_ticks == 1 ) {
-                            m_write_data (( m_data.parity & 1 ) ? 0 : 1 ) ;
+                    case answer:
+                    case report:
+                        if( m_clk.level == HIGH ) { /* set stoop bit */
+                            --m_ticks ;
+                            if ( m_ticks == 1 ) m_write_data( 1 ) ; 
+                            else if ( m_ticks == 0 ) {
+                                m_write_clk( 0 ) ;
+                                m_clk.level = LOW ;
+                                m_ticks = 4 ;
+                            }
                         }
-                        else if ( m_ticks == 0 ) {
-                            m_write_clk( 0 ) ;
-                            m_clk.level = LOW ;
-                            m_ticks = 4 ;
+                        else {
+                            if ( --m_ticks == 0 ) {
+                                m_write_clk ( 1 ) ;
+                                m_clk.level = HIGH ;
+                                m_ticks = 4 ;
+                                m_step = 0 ;
+                                m_trans = tail_bit ;
+                            }
                         }
-                    }
-                    else {
-                        if ( --m_ticks == 0 ) {
-                            m_write_clk ( 1 ) ;
-                            m_clk.level = HIGH ;
-                            m_ticks = 4 ;
-                            m_trans = stop_bit ;
-                        }
-                    }
-                    break ;
+                        break ;
 
-                default:
-                    //error condition
-                    break ;
-            }
-            break ;
+                    default:
+                        //error condition
+                        break ;
+                }
+                break ;
 
-        case stop_bit :
-            switch ( m_load.content ) {
-                case command:
+            case ack_bit:
+                if ( m_load.content == command ) {
                     if ( m_clk.level == HIGH ) {
                         --m_ticks ;
-                        if ( m_ticks == 1 ) m_write_data( 0 ) ; 
+                        if ( m_ticks == 1 ) m_write_data( 1 ) ;  /* ACK bit end here */
                         else if ( m_ticks == 0 ) {
                             m_write_clk( 0 ) ;
                             m_clk.level = LOW ;
                             m_ticks = 4 ;
-                            m_trans = ack_bit ;
+                            m_trans = tail_bit ;
                         }
-                        /*TODO: Read stop bit here ,but I don`t think it was necessary
-                         *      just generate clock */
                     }
                     else {
                         if ( --m_ticks == 0 ) {
@@ -689,378 +771,380 @@ void HAL_SYSTICK_Callback(void)
                             m_ticks = 4 ;
                         }
                     }
-                    break ;
-
-                case answer:
-                case report:
-                    if( m_clk.level == HIGH ) { /* set stoop bit */
-                        --m_ticks ;
-                        if ( m_ticks == 1 ) m_write_data( 1 ) ; 
-                        else if ( m_ticks == 0 ) {
-                            m_write_clk( 0 ) ;
-                            m_clk.level = LOW ;
-                            m_ticks = 4 ;
-                        }
-                    }
-                    else {
-                        if ( --m_ticks == 0 ) {
-                            m_write_clk ( 1 ) ;
-                            m_clk.level = HIGH ;
-                            m_ticks = 4 ;
-                            m_step = 0 ;
-                            m_trans = tail_bit ;
-                        }
-                    }
-                    break ;
-
-                default:
+                }
+                /* device report trans did not have ack bit */
+                else {
                     //error condition
-                    break ;
-            }
-            break ;
+                }
+                break ;
 
-        case ack_bit:
-            if ( m_load.content == command ) {
-                if ( m_clk.level == HIGH ) {
-                    --m_ticks ;
-                    if ( m_ticks == 1 ) m_write_data( 1 ) ;  /* ACK bit end here */
-                    else if ( m_ticks == 0 ) {
-                        m_write_clk( 0 ) ;
-                        m_clk.level = LOW ;
-                        m_ticks = 4 ;
-                        m_trans = tail_bit ;
+            case tail_bit:
+                switch ( m_load.content ) {
+                    case command:
+                        if ( --m_ticks == 0 ) {
+                            m_write_clk(1) ;    /* Release clock line */
+                            m_clk.level = HIGH ;
+                            m_write_data( 1 ) ;    /* Release data line */
+                            /* an transfer completed */
+                            m_ticks = 10 ;
+                            m_trans = idle;
+                            m_load.done = 1 ;
+                        }
+                        break ;
+
+                    case answer:
+                    case report:
+                        if ( m_read_clk() == GPIO_PIN_SET ) {
+                            m_count ++ ;
+                            m_ticks = 10 ;
+                            m_trans = idle /*silence*/ ;
+                        }
+                        break ;
+                    default:
+                        break;
+                }
+                break ;
+                /*
+                   case silence:
+                   if ( m_read_clk() != GPIO_PIN_SET  )
+                   {
+                   m_ticks = 12 ;
+                   }
+                   if ( --m_ticks == 0 ) m_trans = idle ;
+                   break ;
+                   */
+            default:
+                break ;
+
+        }
+    }
+
+    if ( KBD_PG ) {
+        switch ( k_trans ) {    /* process KBD transfer */
+            case idle:
+                if ( k_read_clk() == GPIO_PIN_SET ) {
+                    if ( k_ticks == 0 ) {
+                        switch ( k_load.content ) {
+                            case standby:
+                                /* clear trans environment variables */
+                                k_count = 0 ;
+                                break ;
+                            case answer:
+                            case report:
+                                /* ready for device to host trans */
+                                if ( k_count < k_load.load_buf[8] ) {
+                                    k_data.d = k_load.load_buf[k_count] ;
+                                    k_data.parity = 0 ;
+                                    /*TODO: k_count should increase after an byte has 
+                                     * been sent sucessful */
+                                    k_load.done = 0 ;
+                                    /* double check clk line is high */
+                                    k_write_clk( 1 ) ;
+                                    k_clk.level = HIGH ;
+                                    k_ticks = 4 ;
+                                    k_trans = start_bit ;
+                                }
+                                else {
+                                    k_count = 0 ;
+                                    k_load.done = 1 ;
+                                    k_load.load_buf[8] = 0 ;
+                                    /* need change out of interrupt */
+                                    //k_load.content = standby ;
+                                }
+                                break ;
+                        }
                     }
+                    else --k_ticks ;
                 }
                 else {
-                    if ( --m_ticks == 0 ) {
-                        m_write_clk( 1 ) ;
-                        m_clk.level = HIGH ;
-                        m_ticks = 4 ;
-                    }
+                    /* host pull down the clk, communication has been inhibited*/
+                    k_write_data( 1 ) ;
+                    k_ticks = 10 ;
+                    k_step = 0 ;
+                    /*k_count = 0 ;*/
+                    k_trans = inhibit ;
                 }
-            }
-            /* device report trans did not have ack bit */
-            else {
-                //error condition
-            }
-            break ;
-
-        case tail_bit:
-            switch ( m_load.content ) {
-                case command:
-                    if ( --m_ticks == 0 ) {
-                        m_write_clk(1) ;    /* Release clock line */
-                        m_clk.level = HIGH ;
-                        m_write_data( 1 ) ;    /* Release data line */
-                        /* an transfer completed */
-                        m_ticks = 10 ;
-                        m_trans = idle;
-                        m_load.done = 1 ;
-                    }
-                    break ;
-
-                case answer:
-                case report:
-                    if ( m_read_clk() == GPIO_PIN_SET ) {
-                        m_count ++ ;
-                        m_ticks = 10 ;
-                        m_trans = idle /*silence*/ ;
-                    }
-                    break ;
-                default:
-                    break;
-            }
-            break ;
-/*
-        case silence:
-            if ( m_read_clk() != GPIO_PIN_SET  )
-            {
-                m_ticks = 12 ;
-            }
-            if ( --m_ticks == 0 ) m_trans = idle ;
-            break ;
-*/
-        default:
-            break ;
-
-    }
-#endif
-    switch ( k_trans ) {    /* process KBD transfer */
-        case idle:
-            if ( k_read_clk() == GPIO_PIN_SET ) {
-                if ( k_ticks == 0 ) {
-                    switch ( k_load.content ) {
-                        case standby:
-                            /* clear trans environment variables */
-                            k_count = 0 ;
-                            break ;
-                        case answer:
-                        case report:
-                            /* ready for device to host trans */
-                            if ( k_count < k_load.load_buf[8] ) {
-                                k_data.d = k_load.load_buf[k_count] ;
-                                k_data.parity = 0 ;
-                                /*TODO: k_count should increase after an byte has 
-                                 * been sent sucessful */
-                                k_load.done = 0 ;
-                                /* double check clk line is high */
-                                k_write_clk( 1 ) ;
-                                k_clk.level = HIGH ;
-                                k_ticks = 4 ;
-                                k_trans = start_bit ;
+                break ;
+            case inhibit:
+                switch ( k_step ) {
+                    case 0:
+                        /* k_step 0 whait for clk line keep low for at least 100 us */
+                        if ( --k_ticks > 0 ) {
+                            if ( k_read_clk() == GPIO_PIN_SET ) {
+                                k_trans = idle ;
+                                k_ticks = 0 ;
+                            }
+                            else if ( k_read_data() == GPIO_PIN_RESET ) {
+                                k_ticks = 0 ;
+                                k_step = 2 ;
+                            }
+                        }
+                        else {
+                            /*k_count = 0 ; */ /* anyway , answer & report must terminate*/
+                            /* FIXME: should clean load_buf and let routine knows a 
+                             * transfer fail */
+                            if ( k_read_clk() == GPIO_PIN_RESET ) {
+                                /* check for clk keep a low level at least 100 us */
+                                k_step++ ;
                             }
                             else {
-                                k_count = 0 ;
-                                k_load.done = 1 ;
-                                k_load.load_buf[8] = 0 ;
-                                /* need change out of interrupt */
-                                //k_load.content = standby ;
+                                k_trans = idle ;
+                                k_ticks = 0 ;
                             }
-                            break ;
-                    }
-                }
-                else --k_ticks ;
-            }
-            else {
-                /* host pull down the clk, communication has been inhibited*/
-                k_write_data( 1 ) ;
-                k_ticks = 10 ;
-                k_step = 0 ;
-                /*k_count = 0 ;*/
-                k_trans = inhibit ;
-            }
-            break ;
-        case inhibit:
-            switch ( k_step ) {
-                case 0:
-                    /* k_step 0 whait for clk line keep low for at least 100 us */
-                    if ( --k_ticks > 0 ) {
+                        }
+                        break ;
+                    case 1:
+                        /*
+                         * k_step 1 wait for data line fall to low ,and clk must keep low
+                         * */
                         if ( k_read_clk() == GPIO_PIN_SET ) {
                             k_trans = idle ;
                             k_ticks = 0 ;
+                            /*k_step = 0 ;*/
                         }
                         else if ( k_read_data() == GPIO_PIN_RESET ) {
-                            k_ticks = 0 ;
-                            k_step = 2 ;
+                            /* got a host command start condition */
+                            k_step++ ;  /* next step ,wait for clk rise to high */
                         }
-                    }
-                    else {
-                        /*k_count = 0 ; */ /* anyway , answer & report must terminate*/
-                        /* FIXME: should clean load_buf and let routine knows a 
-                         * transfer fail */
-                        if ( k_read_clk() == GPIO_PIN_RESET ) {
-                            /* check for clk keep a low level at least 100 us */
-                            k_step++ ;
+                        break ; 
+                    case 2:
+                        /*
+                         * k_step 2 wait for clk rise to high , thus the start
+                         * condition is meet
+                         * */
+                        k_count = 0 ;  /* anyway , answer & report must terminate*/
+                        if (( k_read_clk() == GPIO_PIN_SET ) && 
+                                    ( k_read_data() == GPIO_PIN_RESET )) {
+                            k_load.content = command ;
+                            k_load.done = 0 ;
+                            k_data = (data_package){ 0 ,0 , 0 ,} ;
+                            k_trans = start_bit ;
+                            k_ticks = 4 ;
+                            k_step = 0 ;
+                            k_clk.level = HIGH ;
                         }
-                        else {
-                            k_trans = idle ;
-                            k_ticks = 0 ;
-                        }
-                    }
-                    break ;
-                case 1:
-                    /*
-                     * k_step 1 wait for data line fall to low ,and clk must keep low
-                     * */
-                    if ( k_read_clk() == GPIO_PIN_SET ) {
-                        k_trans = idle ;
-                        k_ticks = 0 ;
-                        /*k_step = 0 ;*/
-                    }
-                    else if ( k_read_data() == GPIO_PIN_RESET ) {
-                        /* got a host command start condition */
-                        k_step++ ;  /* next step ,wait for clk rise to high */
-                    }
-                    break ; 
-                case 2:
-                    /*
-                     * k_step 2 wait for clk rise to high , thus the start
-                     * condition is meet
-                     * */
-                    k_count = 0 ;  /* anyway , answer & report must terminate*/
-                    if (( k_read_clk() == GPIO_PIN_SET ) && 
-                        ( k_read_data() == GPIO_PIN_RESET )) {
-                        k_load.content = command ;
-                        k_load.done = 0 ;
-                        k_data = (data_package){ 0 ,0 , 0 ,} ;
-                        k_trans = start_bit ;
-                        k_ticks = 4 ;
-                        k_step = 0 ;
-                        k_clk.level = HIGH ;
-                    }
-                    break ;
-                default:
-                    break ;
-            }
-            break ;
+                        break ;
+                    default:
+                        break ;
+                }
+                break ;
 
-        case start_bit:
-            switch ( k_load.content ) {
-                case command:
-                    /*
-                     * receiving an command
-                     * */
-                    if ( --k_ticks == 0 ) {
-                        k_write_clk( 0 ) ;
-                        k_clk.level = LOW ;
-                        k_ticks = 4 ;
-                        k_step = 0 ;
-                        k_trans = significant_bit ;
-                    }
-                    break ;
-
-                case answer:
-                case report:
-                    if( k_clk.level == HIGH ) { /* set start bit */
-                        --k_ticks ;
-                        if ( k_ticks == 1 ) k_write_data( 0 ) ; 
-                        else if ( k_ticks == 0 ) {
+            case start_bit:
+                switch ( k_load.content ) {
+                    case command:
+                        /*
+                         * receiving an command
+                         * */
+                        if ( --k_ticks == 0 ) {
                             k_write_clk( 0 ) ;
                             k_clk.level = LOW ;
-                            k_ticks = 4 ;
-                        }
-                    }
-                    else {  /* data line is high means start bit fault */
-                        if ( --k_ticks == 0 ) {
-                            k_write_clk ( 1 ) ;
-                            k_clk.level = HIGH ;
                             k_ticks = 4 ;
                             k_step = 0 ;
                             k_trans = significant_bit ;
                         }
-                    }
-                    break ;
-                default:
-                    //error condition
-                    break ;
-            }
-            break ;
+                        break ;
 
-        case significant_bit:
-            switch ( k_load.content ) {
-                case command:
-                    if ( --k_ticks == 0 ) {
-                        if ( k_clk.level == LOW ) {
-                            k_write_clk(1) ;
-                            k_clk.level = HIGH ;
-                            k_ticks = 4 ;
-                            k_data.d |= (((k_read_data()) & 1 ) << k_step ) ;
+                    case answer:
+                    case report:
+                        if( k_clk.level == HIGH ) { /* set start bit */
+                            --k_ticks ;
+                            if ( k_ticks == 1 ) k_write_data( 0 ) ; 
+                            else if ( k_ticks == 0 ) {
+                                k_write_clk( 0 ) ;
+                                k_clk.level = LOW ;
+                                k_ticks = 4 ;
+                            }
+                        }
+                        else {  /* data line is high means start bit fault */
+                            if ( --k_ticks == 0 ) {
+                                k_write_clk ( 1 ) ;
+                                k_clk.level = HIGH ;
+                                k_ticks = 4 ;
+                                k_step = 0 ;
+                                k_trans = significant_bit ;
+                            }
+                        }
+                        break ;
+                    default:
+                        //error condition
+                        break ;
+                }
+                break ;
+
+            case significant_bit:
+                switch ( k_load.content ) {
+                    case command:
+                        if ( --k_ticks == 0 ) {
+                            if ( k_clk.level == LOW ) {
+                                k_write_clk(1) ;
+                                k_clk.level = HIGH ;
+                                k_ticks = 4 ;
+                                k_data.d |= (((k_read_data()) & 1 ) << k_step ) ;
+                            }
+                            else {
+                                k_write_clk( 0 ) ;
+                                k_clk.level = LOW ;
+                                k_ticks = 4 ;
+                                if ( ++k_step >= 8 ) {
+                                    k_trans = parity_bit ;
+                                    k_step = 0 ;
+                                }
+                            }
+                        }
+                        break ;
+                    case answer:
+                    case report:
+                        if( k_clk.level == HIGH ) { /* set start bit */
+                            --k_ticks ;
+                            if ( k_ticks == 1 ) {
+                                k_write_data ( k_data.d & 1 ) ;
+                                k_data.parity += k_data.d & 1 ;
+                                k_data.d >>= 1 ;
+                            }
+                            else if ( k_ticks == 0 ) {
+                                k_write_clk( 0 ) ;
+                                k_clk.level = LOW ;
+                                k_ticks = 4 ;
+                            }
+                        }
+                        else {  /* data line is high means start bit fault */
+                            if ( --k_ticks == 0 ) {
+                                k_write_clk ( 1 ) ;
+                                k_clk.level = HIGH ;
+                                k_ticks = 4 ;
+                                if ( ++k_step >= 8 ) {
+                                    k_trans = parity_bit ;
+                                    k_step = 0 ;
+                                }
+                            }
+                        }
+                        break ;
+                    default:
+                        break ;
+                        //error condition
+                }
+                break ;
+
+            case parity_bit:
+                switch ( k_load.content ) {
+                    case command:
+                        if ( --k_ticks == 0 ) {
+                            if ( k_clk.level == LOW ) {
+                                k_write_clk(1) ;
+                                k_clk.level = HIGH ;
+                                k_ticks = 4 ;
+                                k_data.parity = k_data.d ;
+                                k_data.valid = 0 ;
+                                while ( k_data.parity ) {
+                                    k_data.parity &= ( k_data.parity-1 ) ;
+                                    k_data.valid++ ;
+                                }
+                                if ((k_data.valid & 1 ) != ((k_read_data()) & 1 )) {
+                                    k_data.valid = 1 ;
+                                }
+                                else k_data.valid = 0 ;
+                            }
+                            else {
+                                k_write_clk( 0 ) ;
+                                k_clk.level = LOW ;
+                                k_ticks = 4 ;
+                                k_trans = stop_bit ;
+                            }
+                        }
+                        break ; 
+
+                    case answer:
+                    case report:
+                        if( k_clk.level == HIGH ) { /* set start bit */
+                            --k_ticks ;
+                            if ( k_ticks == 1 ) {
+                                k_write_data (( k_data.parity & 1 ) ? 0 : 1 ) ;
+                            }
+                            else if ( k_ticks == 0 ) {
+                                k_write_clk( 0 ) ;
+                                k_clk.level = LOW ;
+                                k_ticks = 4 ;
+                            }
                         }
                         else {
-                            k_write_clk( 0 ) ;
-                            k_clk.level = LOW ;
-                            k_ticks = 4 ;
-                            if ( ++k_step >= 8 ) {
-                                k_trans = parity_bit ;
-                                k_step = 0 ;
+                            if ( --k_ticks == 0 ) {
+                                k_write_clk ( 1 ) ;
+                                k_clk.level = HIGH ;
+                                k_ticks = 4 ;
+                                k_trans = stop_bit ;
                             }
                         }
-                    }
-                    break ;
-                case answer:
-                case report:
-                    if( k_clk.level == HIGH ) { /* set start bit */
-                        --k_ticks ;
-                        if ( k_ticks == 1 ) {
-                            k_write_data ( k_data.d & 1 ) ;
-                            k_data.parity += k_data.d & 1 ;
-                            k_data.d >>= 1 ;
-                        }
-                        else if ( k_ticks == 0 ) {
-                            k_write_clk( 0 ) ;
-                            k_clk.level = LOW ;
-                            k_ticks = 4 ;
-                        }
-                    }
-                    else {  /* data line is high means start bit fault */
-                        if ( --k_ticks == 0 ) {
-                            k_write_clk ( 1 ) ;
-                            k_clk.level = HIGH ;
-                            k_ticks = 4 ;
-                            if ( ++k_step >= 8 ) {
-                                k_trans = parity_bit ;
-                                k_step = 0 ;
-                            }
-                        }
-                    }
-                    break ;
-                default:
-                    break ;
-                    //error condition
-            }
-            break ;
+                        break ;
 
-        case parity_bit:
-            switch ( k_load.content ) {
-                case command:
-                    if ( --k_ticks == 0 ) {
-                        if ( k_clk.level == LOW ) {
-                            k_write_clk(1) ;
-                            k_clk.level = HIGH ;
-                            k_ticks = 4 ;
-                            k_data.parity = k_data.d ;
-                            k_data.valid = 0 ;
-                            while ( k_data.parity ) {
-                                k_data.parity &= ( k_data.parity-1 ) ;
-                                k_data.valid++ ;
+                    default:
+                        //error condition
+                        break ;
+                }
+                break ;
+
+            case stop_bit :
+                switch ( k_load.content ) {
+                    case command:
+                        if ( k_clk.level == HIGH ) {
+                            --k_ticks ;
+                            if ( k_ticks == 1 ) k_write_data( 0 ) ; 
+                            else if ( k_ticks == 0 ) {
+                                k_write_clk( 0 ) ;
+                                k_clk.level = LOW ;
+                                k_ticks = 4 ;
+                                k_trans = ack_bit ;
                             }
-                            if ((k_data.valid & 1 ) != ((k_read_data()) & 1 )) {
-                                k_data.valid = 1 ;
-                            }
-                            else k_data.valid = 0 ;
+                            /*TODO: Read stop bit here ,but I don`t think it was necessary
+                             *      just generate clock */
                         }
                         else {
-                            k_write_clk( 0 ) ;
-                            k_clk.level = LOW ;
-                            k_ticks = 4 ;
-                            k_trans = stop_bit ;
+                            if ( --k_ticks == 0 ) {
+                                k_write_clk( 1 ) ;
+                                k_clk.level = HIGH ;
+                                k_ticks = 4 ;
+                            }
                         }
-                    }
-                    break ; 
+                        break ;
 
-                case answer:
-                case report:
-                    if( k_clk.level == HIGH ) { /* set start bit */
-                        --k_ticks ;
-                        if ( k_ticks == 1 ) {
-                            k_write_data (( k_data.parity & 1 ) ? 0 : 1 ) ;
+                    case answer:
+                    case report:
+                        if( k_clk.level == HIGH ) { /* set stoop bit */
+                            --k_ticks ;
+                            if ( k_ticks == 1 ) k_write_data( 1 ) ; 
+                            else if ( k_ticks == 0 ) {
+                                k_write_clk( 0 ) ;
+                                k_clk.level = LOW ;
+                                k_ticks = 4 ;
+                            }
                         }
-                        else if ( k_ticks == 0 ) {
-                            k_write_clk( 0 ) ;
-                            k_clk.level = LOW ;
-                            k_ticks = 4 ;
+                        else {
+                            if ( --k_ticks == 0 ) {
+                                k_write_clk ( 1 ) ;
+                                k_clk.level = HIGH ;
+                                k_ticks = 4 ;
+                                k_step = 0 ;
+                                k_trans = tail_bit ;
+                            }
                         }
-                    }
-                    else {
-                        if ( --k_ticks == 0 ) {
-                            k_write_clk ( 1 ) ;
-                            k_clk.level = HIGH ;
-                            k_ticks = 4 ;
-                            k_trans = stop_bit ;
-                        }
-                    }
-                    break ;
+                        break ;
 
-                default:
-                    //error condition
-                    break ;
-            }
-            break ;
+                    default:
+                        //error condition
+                        break ;
+                }
+                break ;
 
-        case stop_bit :
-            switch ( k_load.content ) {
-                case command:
+            case ack_bit:
+                if ( k_load.content == command ) {
                     if ( k_clk.level == HIGH ) {
                         --k_ticks ;
-                        if ( k_ticks == 1 ) k_write_data( 0 ) ; 
+                        if ( k_ticks == 1 ) k_write_data( 1 ) ;  /* ACK bit end here */
                         else if ( k_ticks == 0 ) {
                             k_write_clk( 0 ) ;
                             k_clk.level = LOW ;
                             k_ticks = 4 ;
-                            k_trans = ack_bit ;
+                            k_trans = tail_bit ;
                         }
-                        /*TODO: Read stop bit here ,but I don`t think it was necessary
-                         *      just generate clock */
                     }
                     else {
                         if ( --k_ticks == 0 ) {
@@ -1069,90 +1153,42 @@ void HAL_SYSTICK_Callback(void)
                             k_ticks = 4 ;
                         }
                     }
-                    break ;
-
-                case answer:
-                case report:
-                    if( k_clk.level == HIGH ) { /* set stoop bit */
-                        --k_ticks ;
-                        if ( k_ticks == 1 ) k_write_data( 1 ) ; 
-                        else if ( k_ticks == 0 ) {
-                            k_write_clk( 0 ) ;
-                            k_clk.level = LOW ;
-                            k_ticks = 4 ;
-                        }
-                    }
-                    else {
-                        if ( --k_ticks == 0 ) {
-                            k_write_clk ( 1 ) ;
-                            k_clk.level = HIGH ;
-                            k_ticks = 4 ;
-                            k_step = 0 ;
-                            k_trans = tail_bit ;
-                        }
-                    }
-                    break ;
-
-                default:
-                    //error condition
-                    break ;
-            }
-            break ;
-
-        case ack_bit:
-            if ( k_load.content == command ) {
-                if ( k_clk.level == HIGH ) {
-                    --k_ticks ;
-                    if ( k_ticks == 1 ) k_write_data( 1 ) ;  /* ACK bit end here */
-                    else if ( k_ticks == 0 ) {
-                        k_write_clk( 0 ) ;
-                        k_clk.level = LOW ;
-                        k_ticks = 4 ;
-                        k_trans = tail_bit ;
-                    }
                 }
+                /* device report trans did not have ack bit */
                 else {
-                    if ( --k_ticks == 0 ) {
-                        k_write_clk( 1 ) ;
-                        k_clk.level = HIGH ;
-                        k_ticks = 4 ;
-                    }
+                    //error condition
                 }
-            }
-            /* device report trans did not have ack bit */
-            else {
-                //error condition
-            }
-            break ;
+                break ;
 
-        case tail_bit:
-            switch ( k_load.content ) {
-                case command:
-                    if ( --k_ticks == 0 ) {
-                        k_write_clk(1) ;    /* Release clock line */
-                        k_clk.level = HIGH ;
-                        k_write_data( 1 ) ;    /* Release data line */
-                        /* an transfer completed */
-                        k_ticks = 40 ;
-                        k_trans = idle;
-                        k_load.done = 1 ;
-                    }
-                    break ;
+            case tail_bit:
+                switch ( k_load.content ) {
+                    case command:
+                        if ( --k_ticks == 0 ) {
+                            k_write_clk(1) ;    /* Release clock line */
+                            k_clk.level = HIGH ;
+                            k_write_data( 1 ) ;    /* Release data line */
+                            /* an transfer completed */
+                            k_ticks = 40 ;
+                            k_trans = idle;
+                            k_load.done = 1 ;
+                        }
+                        break ;
 
-                case answer:
-                case report:
-                    if ( k_read_clk() == GPIO_PIN_SET ) {
-                        k_count ++ ;
-                        k_ticks = 10 ;
-                        k_trans = idle ;
-                    }
-                    break ;
-                default:
-                    break;
-            }
-            break ;
-        default:
-            break ;
+                    case answer:
+                    case report:
+                        if ( k_read_clk() == GPIO_PIN_SET ) {
+                            k_count ++ ;
+                            k_ticks = 10 ;
+                            k_trans = idle ;
+                        }
+                        break ;
+                    default:
+                        break;
+                }
+                break ;
+            default:
+                break ;
+        }
     }
 }
 /* USER CODE END 4 */
