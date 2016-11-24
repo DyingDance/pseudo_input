@@ -134,13 +134,15 @@ void process_command( void )
                 }
                 else {
                     SetTimeout( wait_1000ms , uart ) ;
-                    kbd_led = 0x0 ;
                     cs_phase++ ; 
                 }
             }
             break ;
         case 6:
-            if ( atproc_command() == ack )  cs_phase = 3 ;
+            if ( atproc_command() == ack ) {
+                kbd_led = 0x0 ;
+                cs_phase = 3 ;
+            }
             else {  /* respond not correct , wait 1s then retry */
                 if ( GetRemainTime( uart ) == 0 ) cs_phase-- ;
             }
