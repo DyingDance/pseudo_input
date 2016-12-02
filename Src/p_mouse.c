@@ -18,10 +18,12 @@ trans_load m_load ;
 clk_line_phase m_clk ;
 /* To fix LB & Drag error */
 uint8_t left_button = 0 ;
+uint8_t right_button = 0 ;
+uint8_t middle_button = 0 ;
 //data_line_phase m_data ;      
 
 
-static void get_event( uint8_t ) ;
+static uint8_t get_event( uint8_t ) ;
 
 
 void clear_mouse_env( void )
@@ -45,7 +47,7 @@ inline void m_read_bits(void)
 
 void mouse_ctrl (void)
 {
-    static uint8_t m_mission , m_job ,hot ;
+    static uint8_t m_mission , m_job ,hot, eates ;
     switch ( m_status ) {
         case Power_On:
             switch ( m_load.content ) {
@@ -194,7 +196,7 @@ void mouse_ctrl (void)
                     if (( m_trans == idle ) && m_load.done 
                      && ( m_load.load_buf[8] == 0 )) {
                         if ( m_job < m_event.events ){
-                            get_event( m_job ) ;
+                            eates = get_event( m_job ) ;
                             m_load.load_buf[8] = 4 ;
                             HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                             if( m_load.done ) m_load.content = report ;
@@ -242,7 +244,7 @@ void mouse_ctrl (void)
                     /* mouse event report routine */
                     /*if ( m_load.done ) {*/
                     if (( m_trans == idle ) && m_load.done ) {
-                        m_job++ ;
+                        m_job+= eates ;
                         HAL_NVIC_DisableIRQ( SysTick_IRQn ) ;
                         if( m_load.done ) m_load.content = standby ;
                         HAL_NVIC_EnableIRQ( SysTick_IRQn ) ;
@@ -347,68 +349,101 @@ void m_write_data( int level)
     HAL_GPIO_WritePin ( GPIOC , MOUSE_DATA_W_Pin , level ? GPIO_PIN_RESET : GPIO_PIN_SET ) ;
 }
 
-void get_event( uint8_t point )
+uint8_t get_event( uint8_t point )
 {
+    uint8_t L_click , R_click , M_click , eates;
+    L_click = 0 ; /* 0x11 means received an left button press
+                     0x10 means received an left button release */
+    R_click = 0 ; /* 0x11 means received an right button press
+                     0x10 means received an right button release */
+    M_click = 0 ; /* 0x11 means received an middle button press
+                     0x10 means received an middle button release */
+    eates = 0 ;
     m_load.load_buf[0] = 0x8 ;      /* the first byte ,bit3 always 1 */
-    switch ( m_event.event_info[point].type ) {    /* sort the type of event */
-        case 0x0001:      /* button press type event */
-            switch ( m_event.event_info[point].code ) {
-                case 0x0110:    /* left button event */
-                    if ( m_event.event_info[point].value ){  /* left button pressed */
-                        m_load.load_buf[0] |= 1 ;
-                        left_button = 1 ; 
-                    }
-                    else left_button = 0 ;  /* left button released */
-                    break ;
-                case 0x0111:    /* right button event */
-                    if ( m_event.event_info[point].value )  /* right button pressed */
-                        m_load.load_buf[0] |= 2 ;
-                    break ;
-                case 0x0112:    /* middle button event */
-                    if ( m_event.event_info[point].value )  /* middle button pressed */
-                        m_load.load_buf[0] |= 4 ;
-                    break ;
-                default:
-                    break ;
-            }
-            /* movemont value is zero */
-            m_load.load_buf[1] = 0 ;
-            m_load.load_buf[2] = 0 ;
-            m_load.load_buf[3] = 0 ;
-            break ;
-        case 0x0002:      /* movement type event  */
-            if( left_button ) m_load.load_buf[0] |= 1 ; /* with left button hold */
-            switch ( m_event.event_info[point].code ) {
-                case 0x0000:      /* X way movement */
-                    m_load.load_buf[1] = m_event.event_info[point].value ;
-                    if ( m_load.load_buf[1] & 0x80 ) m_load.load_buf[0] |= 0x10 ;
-                    m_load.load_buf[2] = 0 ;
-                    m_load.load_buf[3] = 0 ;
-                    break ;
-                case 0x0001:      /* Y way movement */
-                    m_load.load_buf[1] = 0 ;
-                    m_load.load_buf[2] = m_event.event_info[point].value ;
-                    if ( m_load.load_buf[2] & 0x80 ) m_load.load_buf[0] |= 0x20 ;
-                    m_load.load_buf[3] = 0 ;
-                    break ;
-                case 0x0008:      /* wheel movement */
-                    m_load.load_buf[1] = 0 ;
-                    m_load.load_buf[2] = 0 ;
-                    m_load.load_buf[3] = m_event.event_info[point].value ;
-                    break ;
-                default:
-                    m_load.load_buf[1] = 0 ;
-                    m_load.load_buf[2] = 0 ;
-                    m_load.load_buf[3] = 0 ;
-                    break ;
-            }
-            break ;
-        default:
-            m_load.load_buf[1] = 0 ;
-            m_load.load_buf[2] = 0 ;
-            m_load.load_buf[3] = 0 ;
-            break ;
+    /* movemont value is zero */
+    m_load.load_buf[1] = 0 ;
+    m_load.load_buf[2] = 0 ;
+    m_load.load_buf[3] = 0 ;
+
+    while ( point < m_event.events) {
+        switch ( m_event.event_info[point].type ) {    /* sort the type of event */
+            case 0x0001:      /* button press type event */
+                switch ( m_event.event_info[point].code ) {
+                    case 0x0110:    /* left button event */
+                        if ( m_event.event_info[point].value ){  /* left button pressed */
+                            if ( L_click == 0x10 ) return eates ; 
+                            m_load.load_buf[0] |= 1 ;
+                            left_button = 1 ; 
+                            /* when Left button pressed , right button & middle
+                             * button should invalid */
+                            right_button = 0 ;
+                            middle_button = 0 ;
+                            L_click = 0x11 ;
+                        }
+                        else {
+                            if ( L_click == 0x11 ) return eates ;
+                            left_button = 0 ;  /* left button released */
+                            L_click = 0x10 ;
+                        }
+                        break ;
+                    case 0x0111:    /* right button event */
+                        if ( m_event.event_info[point].value ) {  /* right button pressed */
+                            if ( R_click == 0x10 ) return eates ; 
+                            m_load.load_buf[0] |= 2 ;
+                            if (( left_button == 0 ) && ( middle_button == 0 )) right_button = 1 ;
+                            R_click = 0x11 ;
+                        }
+                        else {
+                            if ( R_click == 0x11 ) return eates ;
+                            right_button = 0 ;
+                            R_click = 0x10 ;
+                        }
+                        break ;
+                    case 0x0112:    /* middle button event */
+                        if ( m_event.event_info[point].value ) { /* middle button pressed */
+                            if ( M_click == 0x10 ) return eates ; 
+                            m_load.load_buf[0] |= 4 ;
+                            middle_button = 1 ;
+                            left_button = 0 ;
+                            right_button = 0 ;
+                            M_click = 0x11 ;
+                        }
+                        else {
+                            if ( M_click == 0x11 ) return eates ;
+                            middle_button = 0 ;
+                            M_click = 0x10 ;
+                        }
+                        break ;
+                    default:
+                        break ;
+                }
+                break ;
+            case 0x0002:      /* movement type event  */
+                if( left_button ) m_load.load_buf[0] |= 1 ; /* with left button hold */
+                switch ( m_event.event_info[point].code ) {
+                    case 0x0000:      /* X way movement */
+                        m_load.load_buf[1] += m_event.event_info[point].value ;
+                        if ( m_load.load_buf[1] & 0x80 ) m_load.load_buf[0] |= 0x10 ;
+                        break ;
+                    case 0x0001:      /* Y way movement */
+                        m_load.load_buf[2] += m_event.event_info[point].value ;
+                        if ( m_load.load_buf[2] & 0x80 ) m_load.load_buf[0] |= 0x20 ;
+                        m_load.load_buf[3] = 0 ;
+                        break ;
+                    case 0x0008:      /* wheel movement */
+                        m_load.load_buf[3] += m_event.event_info[point].value ;
+                        break ;
+                    default:
+                        break ;
+                }
+                break ;
+            default:
+                break ;
+        }
+        point++ ;
+        eates++ ;
     }
+    return eates ;
 }
 
 #if 0
