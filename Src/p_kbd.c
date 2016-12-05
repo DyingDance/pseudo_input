@@ -219,7 +219,8 @@ void KBD_ctrl (void)
                             /* if has received a led command */
                             if (( k_mission == 0xed ) && 
                                (( k_data.d & 0xf0 ) == 0 )) {
-                                  kbd_led = k_data.d | 0x80 ;
+                                /* do not report any KBD LED command */
+                                /*  kbd_led = k_data.d | 0x80 ; */
                                   k_mission = 0 ;
                             }
                             else k_mission = k_data.d ;
@@ -330,7 +331,16 @@ void get_event( uint8_t point )
         if ( k_event.event_info[point].value ) {
             if ( k_event.event_info[point].code < 0x60 ) {
                 k_load.load_buf[0] = scan_code[k_event.event_info[point].code][1] ;
-                k_load.load_buf[8] = 1 ;
+                /* For Normal Key , Add an release */
+                if(( k_event.event_info[point].code != 0x1d ) &&  /* Left ctrl */
+                   ( k_event.event_info[point].code != 0x2a ) &&  /* Left shift */
+                   ( k_event.event_info[point].code != 0x36 ) &&  /* Right shift */
+                   ( k_event.event_info[point].code != 0x38 )) {  /* Left alt */
+                    k_load.load_buf[1] = 0xf0 ;
+                    k_load.load_buf[2] = k_load.load_buf[0] ;
+                    k_load.load_buf[8] = 3 ;
+                }
+                else k_load.load_buf[8] = 1 ;
                 if ( k_event.event_info[point].code == 0x1d ) ctrl = 1 ;
             }
             else {
@@ -343,7 +353,14 @@ void get_event( uint8_t point )
                 else {
                     k_load.load_buf[0] = 0xe0 ;
                     k_load.load_buf[1] = scan_code[k_event.event_info[point].code][1] ;
-                    k_load.load_buf[8] = 2 ;
+                    if (( k_event.event_info[point].code != 0x61 ) &&  /* Right ctrl */
+                        ( k_event.event_info[point].code != 0x65 )) {  /* Right alt */
+                    k_load.load_buf[2] = 0xe0 ;
+                    k_load.load_buf[3] = 0xf0 ;
+                    k_load.load_buf[4] = k_load.load_buf[1] ;
+                    k_load.load_buf[8] = 5 ;
+                    }
+                    else k_load.load_buf[8] = 2 ;
                     if ( k_event.event_info[point].code == 0x61 ) ctrl = 1 ;
                 }
             }
