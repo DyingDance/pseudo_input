@@ -1,0 +1,9 @@
+*.out
+*.csv
+*.vim
+tags
+*.txt
+*.dep
+*.ewd
+EWARM/PS2KM
+EWARM/settings

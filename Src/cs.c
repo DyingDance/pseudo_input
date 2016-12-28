@@ -262,6 +262,9 @@ int post_cmd ( void )
         }
         return ( purge_pool( pool_scal , event_pool ) );
     }
+    else if ( *pool_scal == '\r' ) {  /* only received an AT commnad */
+        HAL_UART_Transmit_IT( &huart1 , "OK\r\n" , ( strlen( "OK\r\n" ))) ;
+    }
     return -1 ;
 }
 
@@ -458,6 +461,7 @@ void PS2KM_Receive_IT(UART_HandleTypeDef *huart)
                           (unsigned char)(huart->Instance->RDR & (uint8_t)huart->Mask) ;
              rx_buffer.en_q %= RXBUFFERSIZE ;
         }
+        else --rx_buffer.count_q ;
     }
     else
     {
