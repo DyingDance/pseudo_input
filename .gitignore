@@ -1,9 +1,12 @@
 *.out
 *.csv
 *.vim
-tags
 *.txt
 *.dep
 *.ewd
+*.ioc
+.mxproject
+tags
+cscope.out
 EWARM/PS2KM
 EWARM/settings
