@@ -16,6 +16,8 @@ trans_phase m_trans ;
 trans_load m_load ;
 //uint8_t m_mission[4] ;
 clk_line_phase m_clk ;
+/* To fix LB & Drag error */
+uint8_t left_button = 0 ;
 
 //data_line_phase m_data ;      
 
@@ -288,8 +290,11 @@ void get_event( uint8_t point )
         case 0x0001:      /* button press type event */
             switch ( m_event.event_info[point].code ) {
                 case 0x0110:    /* left button event */
-                    if ( m_event.event_info[point].value )  /* left button pressed */
+                    if ( m_event.event_info[point].value ){  /* left button pressed */
                         m_load.load_buf[0] |= 1 ;
+                        left_button = 1 ; 
+                    }
+                    else left_button = 0 ;  /* left button released */
                     break ;
                 case 0x0111:    /* right button event */
                     if ( m_event.event_info[point].value )  /* right button pressed */
@@ -308,6 +313,7 @@ void get_event( uint8_t point )
             m_load.load_buf[3] = 0 ;
             break ;
         case 0x0002:      /* movement type event  */
+            if( left_button ) m_load.load_buf[0] |= 1 ; /* with left button hold */
             switch ( m_event.event_info[point].code ) {
                 case 0x0000:      /* X way movement */
                     m_load.load_buf[1] = m_event.event_info[point].value ;
